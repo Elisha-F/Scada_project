@@ -66,6 +66,10 @@
     s += ui.line(470, 230, 470, 202, 'pvLv') + ui.cb(470, 190, 'PV.LV_ACB', 'ACB 1250A', { left: true, title: 'PV LV ACB 1250A' }) + ui.line(470, 178, 470, 160, 'pvLv');
     s += ui.meter(510, 192, 'PV.POC');
     s += '<line class="ln" data-live="pvLv" x1="355" y1="160" x2="585" y2="160" stroke-width="4"/>';
+    /* inverter communication: power-line carrier coupled on the 0.8 kV bus via the 63 A PLC circuit */
+    s += ui.line(585, 160, 630, 160, 'pvLv', 2) + ui.line(630, 160, 630, 176, 'pvLv', 2) +
+      '<g class="clickable" data-fp="go" data-p="network"><rect x="610" y="176" width="40" height="22" rx="3" fill="#f3eefb" stroke="#7a4fc0" stroke-width="1.5"/>' +
+      ui.text(630, 191, 'PLC', 'lbl-s') + '</g>' + ui.text(630, 212, 'PLC box 63A', 'lbl-xs') + ui.text(630, 223, '→ Ethernet', 'lbl-xs');
     C.pv.inverters.forEach(function (inv, i) {
       var x = 365 + i * 72;
       s += ui.line(x, 160, x, 100, 'pvLv&PV.' + inv.id + '.MCCB_ON') + ui.inv(x, 78, inv);
@@ -176,7 +180,7 @@
       var site = rows([['Project', 'Solarization Villa Somalia'], ['Client', C.site.client], ['EPC contractor', C.site.contractor], ['Drawing set', C.site.drawing + ' (rev. 05-10-2026)'],
         ['Operating concept', C.site.operation], ['Location', 'Villa Somalia, Mogadishu (UTC+3)']]);
       var pv = rows([['DC capacity', '1,516.32 kWp (2106 × Jinko 720 Wp mono)'], ['AC capacity', '1.4 MW (4 × Sungrow SG350HX)'], ['Strings', '81 × 26 modules (NB01 21, NB02-04 20)'],
-        ['String cable', 'H1Z2Z2-K 1.5kV 1×4mm²'], ['Inverter AC cable', 'ZC-YJLHV22 1.8/3kV 3×185mm² / 3×240mm² Al'], ['Step-up', '1.5MVA 11/0.8kV Dd0, LV ACB 1250A 20kA'], ['Monitoring', 'Inverter PLC box (RS485 Modbus RTU) → Ethernet switch']]);
+        ['String cable', 'H1Z2Z2-K 1.5kV 1×4mm²'], ['Inverter AC cable', 'ZC-YJLHV22 1.8/3kV 3×185mm² / 3×240mm² Al'], ['Step-up', '1.5MVA 11/0.8kV Dd0, LV ACB 1250A 20kA'], ['Monitoring', 'Power-line carrier (PLC) over the AC cables → PLC box (63 A circuit) → Ethernet switch']]);
       var bess = rows([['Energy', '3.34 MWh nominal, LFP 3.2V 314Ah, 416S8P'], ['PCS', '2 × PCS units, 400A AC breakers each'], ['Step-up', '1MVA 11/0.69kV Dd0, LV ACB 1000A 15kA'], ['Operating mode', 'Grid-forming (VSG) master of the islanded network']]);
       var dg = rows([['DG1', '550 kVA, Q1 ACB 800A 65kA'], ['DG2', '660 kVA, Q2 ACB 1000A 66kA'], ['Step-up', '1.5MVA 11/0.4kV Dyn11 Uk 6%'], ['Cable', '2 × 240mm² Cu/XLPE/PVC 1.8/3kV per DG']]);
       var mv = rows([['GIS combiner', '8 panels AH1-AH8, 11kV 1250A busbar, VCB 630A 31.5kA, 3-pos switch 630A 20kA'], ['Feeders', 'AH1 DG · AH2 PV · AH3 BESS · AH4 President · AH5 SAT · AH6 P.M. · AH7 spare · AH8 NECR'],

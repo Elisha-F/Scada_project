@@ -15,7 +15,7 @@
 | 7 | Inverter wiring diagram | 4 × SG350HX, 81 strings × 26 modules, MPPT groups |
 | **13** | **Overall SLD** | Topology of every screen, ratings of VCBs, ACBs, transformers, DGs, PV, BESS, LVDBs |
 | **14** | **11 kV switchgear config** | AH1–AH8 panel usage, VCB/isolator ratings, CTs, ZSCT, VPIS, arresters |
-| **15** | **Communication schematic** | Inverters RS485 → PLC box → Ethernet switch; weather station (only) → blue'Log XM 5000 → Ethernet switch; switch → "Powerplant RTU" |
+| **15** | **Communication schematic** | Inverters → power-line carrier (PLC) → PLC box → Ethernet switch; weather station (only) → blue'Log XM 5000 → Ethernet switch; switch → "Powerplant RTU" |
 | 16 | Weather station mast | Sensors |
 | **17** | **Transformer stations** | President / P.M. RMUs (GIS-12, AH1–AH3, ST260E relay, 2 kVA UPS, 630 kVA Dyn11) |
 | 8–12, 18–25 | LPS, structures, MMS, trenches, GIS room, battery cabin | Civil – not SCADA relevant |
@@ -76,7 +76,7 @@
 | 6 | 14 Switchgear config | AH5 SAT feeder has no ZSCT and no surge arrester; AH8 CT ratio 1250/1 for an NER feeder | Confirm |
 | 7 | 13 SLD | DG2 ACB Icu "66 kA" vs DG1 "65 kA"; ACB Ir/Isd "xx" | Match actual ACB data on site (as noted on drawing) |
 | 8 | 15 Comm. schematic | Only inverters and weather station shown. **GIS relays, BESS EMS/PCS/BMS, DG controllers, RMUs, LVDB meters, fire panel, UPS, PPC, servers, firewall and time sync are missing**; "Powerplant RTU" undefined | Replace with the architecture in §4 |
-| 9 | 13 SLD | "PLC Communication Circuit" 63 A on PV LV bus and "PLC box" on sheet 15 – power-line-carrier (Sungrow MPLC) or a PLC controller? | Clarify; if MPLC, RS485 daisy-chain is backup only |
+| 9 | 13 / 15 | Inverter communication is **power-line carrier (PLC)** over the AC cables to the PLC box (63 A "PLC Communication Circuit" on the PV LV bus), then Ethernet to the switch. Sheet 15 draws RS485 IN/OUT daisy-chain links instead | Redraw sheet 15 as PLC over AC cables → PLC box → Ethernet; keep RS485 only if retained as a commissioning / backup port |
 | 10 | 13/14 | GIS feeder protection relay make/model not stated (RMUs use Zhuhai Strom ST260E) | Select relay with IEC 61850 Ed.2 (MMS + GOOSE) |
 | 11 | 13 | Step-up transformers (1.5 MVA DG, 1.5 MVA PV, 1 MVA BESS) – oil or dry type, temperature / Buchholz devices not shown | Confirm; I/O list includes temperature, Buchholz/PRD, oil level |
 | 12 | 13 | All 11 kV sources are delta on the HV side → the 11 kV system is earthed **only** through AH8 NECR | Add interlock / alarm: AH3 and AH1 should not energise the bus with AH8 open (black-start step 3 closes AH8 first) |
@@ -91,14 +91,14 @@ Purdue-model zoning to IEC 62443-3-2 (shown live on the *Network & Cybersecurity
 
 * **Level 3.5 – DMZ:** NGFW/VPN gateway with IDS & DPI (Modbus/IEC 61850), read-only historian replica / client portal, meteocontrol VCOM via outbound-only 4G router.
 * **Level 2 – Control room:** redundant SCADA servers A/B (hot standby), historian, 2 operator HMI workstations, engineering workstation, GPS time server (NTP + PTP IEEE 1588), 3 kVA SCADA UPS; two managed L3 core switches in an RSTP/PRP ring.
-* **Level 1 – Station:** PPC (redundant CPU), 8 GIS feeder relays on an IEC 61850 station bus (PRP/HSR), blue'Log XM 5000 + Multi I/O + Fieldbus Ext (weather station only), inverter PLC box (PV inverters), BESS EMS/PCS, DG controllers, aux PLC/DC charger, meter gateway, fire alarm panel, fibre field switches at the ESS cabin and DG/NECR area.
-* **Level 0 – Field:** SG350HX inverters (RS485 Modbus RTU daisy-chain, as on sheet 15), weather sensors (SMP12-A, Gill WindSonic, PT1000 ambient & module), BMS racks, genset ECUs, LV meters; remote RMUs (ST260E + managed switch + UPS) on single-mode fibre.
+* **Level 1 – Station:** PPC (redundant CPU), 8 GIS feeder relays on an IEC 61850 station bus (PRP/HSR), blue'Log XM 5000 + Multi I/O + Fieldbus Ext (weather station only), inverter PLC box (power-line carrier from the PV inverters, Ethernet uplink), BESS EMS/PCS, DG controllers, aux PLC/DC charger, meter gateway, fire alarm panel, fibre field switches at the ESS cabin and DG/NECR area.
+* **Level 0 – Field:** SG350HX inverters (power-line carrier over the 0.8 kV AC cables to the PLC box), weather sensors (SMP12-A, Gill WindSonic, PT1000 ambient & module), BMS racks, genset ECUs, LV meters; remote RMUs (ST260E + managed switch + UPS) on single-mode fibre.
 
 | Equipment | Protocol | Medium | Update |
 |---|---|---|---|
 | GIS relays AH1–AH8 | IEC 61850 MMS reports, GOOSE for interlocks/intertrip | Fibre, PRP | event + 1 s integrity |
 | Remote RMU ST260E | Modbus TCP (IEC 61850 if supported) | SM fibre ring | 1 s |
-| PV inverters | Modbus RTU daisy-chain → inverter PLC box → Modbus TCP | RS485 | 5 s |
+| PV inverters | Power-line carrier (PLC) → PLC box → Ethernet / Modbus TCP | 0.8 kV AC cables + Cat6 | 5 s |
 | Weather station (only device on the blue'Log) | Fieldbus Ext → blue'Log XM 5000 → Modbus TCP | RS485 / PT1000 | 1 s, 1 min avg |
 | BESS EMS / PCS / BMS | Modbus TCP (IEC 60870-5-104 optional) | Fibre | 200 ms control / 1 s |
 | DG controllers | Modbus TCP | Fibre / Cat6 | 500 ms |
@@ -140,7 +140,7 @@ All setpoints (25 / 80 / 95 % SOC, 30 % DG minimum load, PF target) are editable
 | Firewall / VPN gateway | NGFW with industrial DPI, IPsec, MFA | Required |
 | GPS time server | NTP + PTP IEEE 1588 | Required |
 | blue'Log XM 5000, Multi I/O, Fieldbus Ext (weather station logger) | – | Available from meteocontrol |
-| Inverter PLC box / data logger (Sungrow) | Modbus TCP register map | Required |
+| Inverter PLC box (Sungrow, power-line carrier) | Max. inverters per box, Ethernet Modbus TCP register map | Required |
 | Sungrow SG350HX | Modbus register map | Available from Sungrow |
 | SMP12-A, Gill WindSonic, PT1000 sensors | – | Available |
 | BESS EMS / PCS / BMS | Modbus TCP register map, grid-forming capability, black-start | Required |

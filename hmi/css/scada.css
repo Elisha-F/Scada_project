@@ -219,7 +219,7 @@ svg.trend .xh { stroke: #9aa5af; stroke-dasharray: 3 3; }
 .zonebg { fill: #f6f9fb; stroke: #c3d0da; stroke-dasharray: 5 4; }
 .zonelbl { font-size: 11px; font-weight: 700; fill: var(--navy-3); }
 .proto { font-size: 9.5px; fill: #2a6fc0; font-style: italic; }
-.link { stroke: #6f7a84; stroke-width: 1.6; fill: none; } .link.fo { stroke: #e07b00; stroke-width: 2.2; } .link.serial { stroke-dasharray: 5 3; } .link.nok { stroke: var(--p1); }
+.link { stroke: #6f7a84; stroke-width: 1.6; fill: none; } .link.fo { stroke: #e07b00; stroke-width: 2.2; } .link.serial { stroke-dasharray: 5 3; } .link.plc { stroke: #7a4fc0; stroke-width: 2.4; stroke-dasharray: 1 4; stroke-linecap: round; } .link.nok { stroke: var(--p1); }
 svg g.sw[data-c=blue] rect { fill: var(--closed); } svg g.sw[data-c=off] rect { fill: var(--open); }
 svg g.vp[data-c=blue] circle { fill: #ffcf3f; stroke: #a07800; }
 svg g[data-c=bad] rect, svg g[data-c=bad] circle { fill: var(--bad); }

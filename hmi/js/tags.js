@@ -209,7 +209,7 @@
   breakerDI('DG', 'TX_LV', 'PM-DGTX', 'Modbus RTU', 'DG step-up TX LV ACB', { racked: true });
 
   /* =============== PV inverters =============== */
-  var pvPr = 'Modbus RTU (RS485) via inverter PLC box → Modbus TCP';
+  var pvPr = 'Power-line carrier (PLC) over AC cables → PLC box → Ethernet / Modbus TCP';
   breakerDI('PV', 'LV_ACB', 'PM-PVTX', 'Modbus RTU', 'PV LV ACB 1250A', { racked: true });
   meter3ph('PV', 'POC', 'PM-PVTX', 'Modbus RTU', 0.8, { thd: true });
   C.pv.inverters.forEach(function (inv) {
