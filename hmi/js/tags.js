@@ -209,7 +209,7 @@
   breakerDI('DG', 'TX_LV', 'PM-DGTX', 'Modbus RTU', 'DG step-up TX LV ACB', { racked: true });
 
   /* =============== PV inverters =============== */
-  var pvDev = 'BLUELOG', pvPr = 'Modbus RTU (RS485) via blue\'Log';
+  var pvPr = 'Modbus RTU (RS485) via inverter PLC box → Modbus TCP';
   breakerDI('PV', 'LV_ACB', 'PM-PVTX', 'Modbus RTU', 'PV LV ACB 1250A', { racked: true });
   meter3ph('PV', 'POC', 'PM-PVTX', 'Modbus RTU', 0.8, { thd: true });
   C.pv.inverters.forEach(function (inv) {
@@ -362,7 +362,7 @@
   });
 
   /* =============== Communications / network health =============== */
-  ['RTU / SCADA Server A', 'SCADA Server B (hot standby)', 'Historian', 'HMI Workstation 1', 'HMI Workstation 2', 'Engineering Workstation', 'PPC Controller', 'blue\'Log XM 5000', 'Firewall / VPN gateway', 'Core switch A', 'Core switch B', 'GPS time server', 'Inverter PLC box', 'BESS EMS', 'DG controller network', 'Fibre ring - President RMU', 'Fibre ring - P.M. RMU'].forEach(function (n, i) {
+  ['RTU / SCADA Server A', 'SCADA Server B (hot standby)', 'Historian', 'HMI Workstation 1', 'HMI Workstation 2', 'Engineering Workstation', 'PPC Controller', 'blue\'Log XM 5000 (weather station)', 'Firewall / VPN gateway', 'Core switch A', 'Core switch B', 'GPS time server', 'Inverter PLC box', 'BESS EMS', 'DG controller network', 'Fibre ring - President RMU', 'Fibre ring - P.M. RMU'].forEach(function (n, i) {
     var id = 'N' + ('0' + (i + 1)).slice(-2);
     T('NET', id, 'OK', 'DI', n + ' online', { dev: 'SCADA', proto: 'ICMP / SNMP v3', v: 1, alarm: { on: 0, pri: i < 2 ? 1 : 2 }, range: n });
   });

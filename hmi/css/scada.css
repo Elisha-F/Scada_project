@@ -1,6 +1,6 @@
 /* Villa Somalia SCADA HMI - high-performance HMI style (muted background,
    colour reserved for state and alarms). Breaker convention: red = closed,
-   green = open, matching the existing DHYBRID / blue'Log screens on site. */
+   green = open, matching the existing DHYBRID screens on site. */
 :root {
   --navy: #0e2f47; --navy-2: #14405f; --navy-3: #1d5577; --accent: #3fb6d9;
   --bg: #eef1f4; --card: #ffffff; --line: #d5dbe1; --ink: #17212b; --ink-2: #4c5a67; --muted: #7d8893;

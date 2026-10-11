@@ -36,7 +36,7 @@
     /* Level 1 */
     s += dev(40, 360, 200, 'Power Plant Controller', 'PPC - redundant CPU', 'NET.N07.OK');
     s += dev(260, 360, 230, 'Protection relays AH1-AH8', 'IEC 61850 MMS + GOOSE', '');
-    s += dev(510, 360, 180, 'blue\'Log XM 5000', '+ Multi I/O + Fieldbus Ext', 'NET.N08.OK');
+    s += dev(510, 360, 180, 'blue\'Log XM 5000', 'weather station only', 'NET.N08.OK');
     s += dev(710, 360, 160, 'Inverter PLC box', 'Sungrow logger', 'NET.N13.OK');
     s += dev(890, 360, 170, 'BESS EMS / PCS', 'Modbus TCP · IEC 104 opt.', 'NET.N14.OK');
     s += dev(1080, 360, 190, 'DG controllers DG1 / DG2', 'Modbus TCP', 'NET.N15.OK');
@@ -45,19 +45,22 @@
     s += dev(1080, 450, 190, 'Field switch DG / NECR', 'fibre uplink', '');
     s += link('140,360 140,330 395,330 395,178') + link('375,360 375,330') + link('600,360 600,330 650,330 650,178', '') + link('790,360 790,330 905,330 905,178');
     s += link('975,360 975,330 905,330') + link('1175,360 1175,330 905,330');
-    s += link('375,450 375,398') + proto(380, 432, 'GOOSE / MMS', 'start') + link('140,450 140,398') + link('600,450 600,398') + link('790,450 790,398') + link('975,450 975,398', 'fo') + link('1175,450 1175,398', 'fo');
+    s += link('375,450 375,398') + proto(380, 432, 'GOOSE / MMS', 'start') + link('975,450 975,398', 'fo') + link('1175,450 1175,398', 'fo');
+    /* station LAN below the second row: aux PLC, station bus, meter gateway, fire panel and field switches uplink to the core here */
+    s += link('140,500 1175,500') + link('250,500 250,330 395,330');
+    [140, 375, 600, 790, 975, 1175].forEach(function (x) { s += link(x + ',488 ' + x + ',500'); });
     s += proto(660, 352, 'Modbus TCP', 'start') + proto(915, 352, 'Modbus TCP', 'start') + proto(1185, 352, 'Modbus TCP', 'start') + proto(150, 356, 'IEC 61850 client / Modbus TCP', 'start');
-    s += proto(250, 520, 'All Level 1 ↔ Level 2 traffic via core switches · VLAN per zone · ACLs', 'start');
+    s += proto(700, 516, 'Station LAN - managed switches, VLAN per zone, ACLs → core switches', 'start');
 
     /* Level 0 */
     ['NB01', 'NB02', 'NB03', 'NB04'].forEach(function (n, i) { s += dev(560 + i * 85, 625, 75, n, 'SG350HX', ''); });
-    s += link('790,488 790,605 597,605 597,625', 'serial') + link('682,605 682,625', 'serial') + link('767,605 767,625', 'serial') + link('852,605 852,625', 'serial');
+    s += link('870,390 880,390 880,605 597,605 597,625', 'serial') + link('682,605 682,625', 'serial') + link('767,605 767,625', 'serial') + link('852,605 852,625', 'serial');
     s += proto(720, 600, 'RS485 Modbus RTU daisy-chain (as per Communication Schematic)');
-    s += dev(560, 700, 340, 'Weather station: SMP12-A · WindSonic · Tamb · Tmod', 'Fieldbus Ext ports 1-4', '') + link('600,488 600,560 520,560 520,719 560,719', 'serial');
+    s += dev(560, 700, 340, 'Weather station: SMP12-A · WindSonic · Tamb · Tmod', 'Fieldbus Ext ports 1-4', '') + link('510,390 500,390 500,719 560,719', 'serial');
     s += dev(930, 625, 130, 'BMS racks 1-8', 'CAN / Modbus', '') + link('975,488 975,625', 'serial');
     s += dev(1080, 625, 190, 'Gensets ECU, ACB trip units', 'J1939 / Modbus', '') + link('1175,488 1175,625', 'serial');
     s += dev(40, 625, 220, 'President office RMU', 'ST260E + switch + UPS', 'NET.N16.OK') + dev(40, 715, 220, 'P.M. office RMU', 'ST260E + switch + UPS', 'NET.N17.OK');
-    s += link('260,644 300,644 300,488', 'fo', 'NET.N16.OK') + link('260,734 320,734 320,488', 'fo', 'NET.N17.OK');
+    s += link('260,644 300,644 300,500', 'fo', 'NET.N16.OK') + link('260,734 320,734 320,500', 'fo', 'NET.N17.OK');
     s += proto(330, 680, 'single-mode fibre (laid with 11kV cables), ring', 'start');
     s += dev(280, 750, 240, 'LV power meters (LVDB, POC)', 'Modbus RTU', '') + link('520,769 545,769 545,488', 'serial');
     s += '<g transform="translate(1000,720)"><line x1="0" y1="0" x2="30" y2="0" class="link"/><text x="36" y="4" class="lbl-xs">Ethernet copper</text>' +
@@ -72,8 +75,8 @@
       var protos = [
         ['11kV protection relays AH1-AH8', 'IEC 61850 MMS (reports), GOOSE (interlocks / intertrip)', 'Fibre station bus, PRP', 'Event driven + 1 s integrity'],
         ['Remote RMU relays ST260E', 'Modbus TCP (IEC 61850 if supported)', 'Single-mode fibre ring', '1 s'],
-        ['PV inverters SG350HX', 'Modbus RTU RS485 → PLC box / blue\'Log', 'Shielded twisted pair', '5 s'],
-        ['Weather station', 'blue\'Log Fieldbus Ext / Modbus TCP', 'RS485 / 4-20 mA / PT1000', '1 s, 1 min averages'],
+        ['PV inverters SG350HX', 'Modbus RTU RS485 daisy-chain → inverter PLC box → Modbus TCP', 'Shielded twisted pair', '5 s'],
+        ['Weather station (only device on blue\'Log)', 'blue\'Log Fieldbus Ext → blue\'Log XM 5000 → Modbus TCP', 'RS485 / 4-20 mA / PT1000', '1 s, 1 min averages'],
         ['BESS EMS, PCS, BMS', 'Modbus TCP (IEC 60870-5-104 optional)', 'Fibre to ESS cabin', '200 ms (control), 1 s'],
         ['DG controllers', 'Modbus TCP', 'Fibre / Cat6', '500 ms'],
         ['Power meters / ACB trip units', 'Modbus RTU via gateway', 'RS485', '1 s'],

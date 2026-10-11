@@ -133,7 +133,7 @@
 
     /* note (as on site DHYBRID screens) */
     s += '<rect class="note-box" x="14" y="560" width="200" height="140" rx="3"/>';
-    ['NOTE:', 'Breaker status is provided via', 'communication from the protection', 'relays, PLCs and blue\'Log.', 'Communication disturbances may', 'freeze indications (shown ###).', 'ALWAYS physically verify breaker', 'and earth-switch position before', 'interacting with the system.'].forEach(function (l, i) {
+    ['NOTE:', 'Breaker status is provided via', 'communication from the protection', 'relays, PLCs and data loggers.', 'Communication disturbances may', 'freeze indications (shown ###).', 'ALWAYS physically verify breaker', 'and earth-switch position before', 'interacting with the system.'].forEach(function (l, i) {
       s += ui.text(22, 578 + i * 14, l, i ? 'lbl-xs' : 'lbl-s', 'start');
     });
     s += '</svg>';
@@ -176,7 +176,7 @@
       var site = rows([['Project', 'Solarization Villa Somalia'], ['Client', C.site.client], ['EPC contractor', C.site.contractor], ['Drawing set', C.site.drawing + ' (rev. 05-10-2026)'],
         ['Operating concept', C.site.operation], ['Location', 'Villa Somalia, Mogadishu (UTC+3)']]);
       var pv = rows([['DC capacity', '1,516.32 kWp (2106 × Jinko 720 Wp mono)'], ['AC capacity', '1.4 MW (4 × Sungrow SG350HX)'], ['Strings', '81 × 26 modules (NB01 21, NB02-04 20)'],
-        ['String cable', 'H1Z2Z2-K 1.5kV 1×4mm²'], ['Inverter AC cable', 'ZC-YJLHV22 1.8/3kV 3×185mm² / 3×240mm² Al'], ['Step-up', '1.5MVA 11/0.8kV Dd0, LV ACB 1250A 20kA'], ['Monitoring', 'blue\'Log XM 5000 + PLC box (RS485)']]);
+        ['String cable', 'H1Z2Z2-K 1.5kV 1×4mm²'], ['Inverter AC cable', 'ZC-YJLHV22 1.8/3kV 3×185mm² / 3×240mm² Al'], ['Step-up', '1.5MVA 11/0.8kV Dd0, LV ACB 1250A 20kA'], ['Monitoring', 'Inverter PLC box (RS485 Modbus RTU) → Ethernet switch']]);
       var bess = rows([['Energy', '3.34 MWh nominal, LFP 3.2V 314Ah, 416S8P'], ['PCS', '2 × PCS units, 400A AC breakers each'], ['Step-up', '1MVA 11/0.69kV Dd0, LV ACB 1000A 15kA'], ['Operating mode', 'Grid-forming (VSG) master of the islanded network']]);
       var dg = rows([['DG1', '550 kVA, Q1 ACB 800A 65kA'], ['DG2', '660 kVA, Q2 ACB 1000A 66kA'], ['Step-up', '1.5MVA 11/0.4kV Dyn11 Uk 6%'], ['Cable', '2 × 240mm² Cu/XLPE/PVC 1.8/3kV per DG']]);
       var mv = rows([['GIS combiner', '8 panels AH1-AH8, 11kV 1250A busbar, VCB 630A 31.5kA, 3-pos switch 630A 20kA'], ['Feeders', 'AH1 DG · AH2 PV · AH3 BESS · AH4 President · AH5 SAT · AH6 P.M. · AH7 spare · AH8 NECR'],
