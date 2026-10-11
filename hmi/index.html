@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VILLA SOMALIA SCADA</title>
+<link rel="stylesheet" href="css/scada.css">
+</head>
+<body>
+<header class="hdr">
+  <div class="brand">
+    <div class="brand-1">VILLA SOMALIA</div>
+    <div class="brand-2">HYBRID POWER PLANT SCADA</div>
+  </div>
+  <nav id="nav" class="nav"></nav>
+  <div class="hdr-r">
+    <div class="contractor">BLUEFLAG<span>ENERGY</span></div>
+  </div>
+</header>
+<div class="subbar">
+  <nav id="subnav" class="subnav"></nav>
+  <div class="plantstat">
+    <span id="daymode" class="daymode"></span>
+    <span class="ind"><i id="ind-pv"></i>PV</span>
+    <span class="ind"><i id="ind-bat"></i>BAT</span>
+    <span class="ind"><i id="ind-dg"></i>DG</span>
+    <span class="ind"><i id="ind-bus"></i>11kV</span>
+    <span class="ppcstate" title="Power Plant Controller state">PPC: <b id="ppcstate"></b></span>
+  </div>
+</div>
+<div id="alarmbanner" class="alarmbanner none" title="Open alarm list">
+  <span class="alm-ico">⚠</span><span id="almtxt"></span>
+  <span id="almcnt" class="almcnt"></span>
+  <button id="ackall" class="btn b-small">ACK ALL</button>
+</div>
+<main id="main"></main>
+<footer class="ftr">
+  <span id="foot-client"></span>
+  <span>Drawing ref. BFE/PR/26/01</span>
+  <span id="commstat"></span>
+  <span id="clock"></span>
+  <span class="user" id="userbtn">User level: <b id="userlvl"></b></span>
+</footer>
+<div id="modal" class="modal"></div>
+
+<script src="js/config.js"></script>
+<script src="js/tags.js"></script>
+<script src="js/sim.js"></script>
+<script src="js/control.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+<script src="js/screens/overview.js"></script>
+<script src="js/screens/mv.js"></script>
+<script src="js/screens/gen_bess.js"></script>
+<script src="js/screens/pv.js"></script>
+<script src="js/screens/load.js"></script>
+<script src="js/screens/safety_ppc.js"></script>
+<script src="js/screens/network.js"></script>
+<script src="js/screens/system.js"></script>
+<script>SCADA.boot();</script>
+</body>
+</html>
