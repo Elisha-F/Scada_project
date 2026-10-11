@@ -5,7 +5,7 @@
   S.screens.pv = {
     title: 'PV Inverters',
     render: function () {
-      var h = '<h2 class="scr-t">PV system <small>1,516.32 kWp · 4 × Sungrow SG350HX · RS485 → PLC box / blue\'Log XM 5000</small></h2>' +
+      var h = '<h2 class="scr-t">PV system <small>1,516.32 kWp · 4 × Sungrow SG350HX · power-line carrier (PLC) → PLC box → Ethernet switch</small></h2>' +
         '<div class="grid g4" style="margin-bottom:12px">' +
         ui.card('PV plant', ui.kv('Active power', 'PPC.PLANT.P_PV') + ui.kv('Available power', 'PPC.PLANT.P_PV_AVAIL') + ui.kv('Curtailment', 'PPC.PLANT.CURTAIL') + ui.kv('Energy today', 'PPC.PLANT.E_PV_DAY') +
           ui.kv('Performance ratio', 'MET.WS.PR') + ui.kv('Irradiance POA', 'MET.WS.IRR_POA'), 'dark') +
