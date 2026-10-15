@@ -37,7 +37,7 @@
 | # | Client requirement | Answer in this submission | Status |
 |---|---|---|---|
 | 1 | Complete SCADA design aligned with BESS and PV, GIS combiner, LVDBs, generators, etc. | HMI with 23 screens covering every item of the SLD (Overview, 11 kV GIS, Protection & NECR, Remote RMUs, Generators, BESS, Racks, PV inverters, Strings, Weather, President LVDB, P.M. LVDB, Aux & UPS, Fire, PPC, Sequences, Network, Alarms, Events, Trends, I/O list, Users) | **Done** (HMI V1.0) |
-| 2 | Complete I/O list – all analogue & digital signals of the entire plant: VCBs, GIS relays, inverter transformers, RMU, DGs, combiner panels, weather station, UPS, aux power, fire detection & suppression | `docs/IO_List.csv` – **1,164 points** (576 AI, 503 DI, 20 AO, 65 DO) with source device, protocol, address / IEC 61850 LN, alarm priority and limits. Generated from the same tag database that drives the screens (`node tools/export-io-list.js`), and browsable live on the *I/O LIST* screen | **Done** – addresses to be finalised with vendor register maps |
+| 2 | Complete I/O list – all analogue & digital signals of the entire plant: VCBs, GIS relays, inverter transformers, RMU, DGs, combiner panels, weather station, UPS, aux power, fire detection & suppression | `docs/IO_List.csv` – **1,173 points** (578 AI, 510 DI, 20 AO, 65 DO) with source device, protocol, address / IEC 61850 LN, alarm priority and limits. Generated from the same tag database that drives the screens (`node tools/export-io-list.js`), and browsable live on the *I/O LIST* screen | **Done** – addresses to be finalised with vendor register maps |
 | 3 | Communication architecture, protocols, network topology, cybersecurity, integration with GIS, LVDBs, generators, PV, BESS | *OVERVIEW → Network & Cybersecurity* screen + §4 below | **Proposed** – for approval |
 | 4 | Data sheets for PPC controllers, field devices, servers, HMI and operational sequence | Operational sequences: *PPC → Operating Sequences* screen + §5. Data-sheet register: §6 | Sequences **done**; data sheets **to be supplied by vendors** |
 
@@ -47,18 +47,18 @@
 |---|---:|---:|---:|---:|
 | 11 kV GIS combiner panel (8 panels, bus, NECR, DC, room) | 118 | 167 | 0 | 24 |
 | Transformers (6) | 18 | 31 | 0 | 0 |
-| Remote RMUs (President / P.M.) | 8 | 40 | 0 | 4 |
+| Remote RMUs (President / P.M.) | 8 | 36 | 0 | 4 |
 | LV distribution boards (2 × 10-way + aux panel) | 73 | 76 | 0 | 6 |
 | Diesel generators | 44 | 44 | 2 | 12 |
-| PV plant / inverters (incl. 81 string currents, 48 MPPT voltages) | 195 | 38 | 8 | 10 |
+| PV plant / inverters (incl. 81 string currents, 48 MPPT voltages, AC combiner) | 195 | 43 | 8 | 10 |
 | Weather station | 9 | 2 | 0 | 0 |
-| BESS (system, 2 PCS, 8 racks, HVAC) | 92 | 37 | 4 | 5 |
+| BESS (system, 2 PCS, 2 battery combiner panels, 8 racks, HVAC) | 94 | 43 | 4 | 5 |
 | Fire detection & suppression (5 zones) | 2 | 35 | 0 | 2 |
 | UPS & auxiliary | 3 | 12 | 0 | 0 |
 | Communications & cybersecurity | 1 | 19 | 0 | 0 |
 | Power plant controller | 13 | 2 | 6 | 2 |
 
-| **Total (1,164)** | **576** | **503** | **20** | **65** |
+| **Total (1,173)** | **578** | **510** | **20** | **65** |
 
 (The I/O LIST screen and `Plant Information` screen always show the live count.)
 
@@ -81,6 +81,7 @@
 | 11 | 13 | Step-up transformers (1.5 MVA DG, 1.5 MVA PV, 1 MVA BESS) – oil or dry type, temperature / Buchholz devices not shown | Confirm; I/O list includes temperature, Buchholz/PRD, oil level |
 | 12 | 13 | All 11 kV sources are delta on the HV side → the 11 kV system is earthed **only** through AH8 NECR | Add interlock / alarm: AH3 and AH1 should not energise the bus with AH8 open (black-start step 3 closes AH8 first) |
 | 13 | 13 | Remote RMUs at the President / P.M. offices – no communication medium shown | Single-mode fibre laid in the 11 kV cable trenches, ring topology |
+| 15 | 13 / 14 | No voltage transformers shown on the 11 kV GIS panels or busbar (only DXN voltage presence indicators), yet voltage metering and 27/59/81 protection need them | Add a busbar VT panel or line VTs on the incomers; confirm per-panel voltage metering |
 | 14 | – | DG controller, BESS EMS/PCS, PPC, SCADA server, fire panel and UPS vendors not stated | Provide data sheets (§6) |
 
 ---

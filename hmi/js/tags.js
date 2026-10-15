@@ -26,13 +26,38 @@
     }
   }
 
+  /* IEC 61850 references (indicative - final mapping from each relay's ICD file).
+     Standard logical nodes where one exists, GGIO points otherwise. */
+  var LN = {
+    CB_CLOSED: 'CTRL/XCBR1.Pos.stVal', CB_OPEN: 'CTRL/XCBR1.Pos.stVal', CMD_OPEN: 'CTRL/CSWI1.Pos.Oper', CMD_CLOSE: 'CTRL/CSWI1.Pos.Oper',
+    CB_TRIPPED: 'PROT/PTRC1.Tr.general', LR_REMOTE: 'CTRL/XCBR1.Loc.stVal (inverted)',
+    DS_CLOSED: 'CTRL/XSWI1.Pos.stVal', ES_EARTHED: 'CTRL/XSWI2.Pos.stVal',
+    SF6_LOW: 'CTRL/SIMG1.InsAlm.stVal', SF6_LOLO: 'CTRL/SIMG1.InsBlk.stVal', RLY_HEALTHY: 'LD0/LPHD1.PhyHealth.stVal',
+    PROT_50: 'PROT/PTOC1.Op.general', PROT_50N: 'PROT/PTOC2.Op.general', PROT_50G: 'PROT/PTOC3.Op.general', PROT_46: 'PROT/PTOC4.Op.general',
+    PROT_27: 'PROT/PTUV1.Op.general', PROT_59: 'PROT/PTOV1.Op.general', PROT_81: 'PROT/PTUF1.Op.general + PTOF1.Op.general',
+    PROT_32: 'PROT/PDOP1.Op.general', PROT_64: 'PROT/PTOC5.Op.general',
+    I_L1: 'MEAS/MMXU1.A.phsA.cVal.mag.f', I_L2: 'MEAS/MMXU1.A.phsB.cVal.mag.f', I_L3: 'MEAS/MMXU1.A.phsC.cVal.mag.f', I_N: 'MEAS/MMXU1.A.neut.cVal.mag.f',
+    U_L12: 'MEAS/MMXU1.PPV.phsAB.cVal.mag.f', U_L23: 'MEAS/MMXU1.PPV.phsBC.cVal.mag.f', U_L31: 'MEAS/MMXU1.PPV.phsCA.cVal.mag.f',
+    P: 'MEAS/MMXU1.TotW.mag.f', Q: 'MEAS/MMXU1.TotVAr.mag.f', S: 'MEAS/MMXU1.TotVA.mag.f', PF: 'MEAS/MMXU1.TotPF.mag.f', F: 'MEAS/MMXU1.Hz.mag.f',
+    E_IMP: 'MEAS/MMTR1.SupWh.actVal', E_EXP: 'MEAS/MMTR1.DmdWh.actVal', U: 'MEAS/MMXU2.PPV.phsAB.cVal.mag.f', I_NER: 'MEAS/MMXU1.A.neut.cVal.mag.f'
+  };
+  var ggio = {};
+  function ln61850(dev, sig, type) {
+    var ld = dev.replace('RLY-', 'GIS');
+    if (LN[sig]) return ld + LN[sig];
+    var k = dev + type; ggio[k] = (ggio[k] || 0) + 1;
+    return ld + (type === 'AI' ? 'MEAS/GGIO2.AnIn' + ggio[k] + '.mag.f' : type === 'DO' ? 'CTRL/GGIO1.SPCSO' + ggio[k] + '.Oper' : 'CTRL/GGIO1.Ind' + ggio[k] + '.stVal');
+  }
+  var ADDR = { 'Calculated': 'SCADA calculation', 'Internal': 'PPC internal variable', 'SNMP': 'SNMP OID (vendor MIB)', 'SNMP v3': 'SNMP OID (vendor MIB)',
+    'ICMP / SNMP v3': 'ICMP ping + SNMP OID', 'Syslog': 'Syslog event', 'NTP': 'NTP status', 'Dry contacts via RMU relay': 'RMU relay binary input' };
+
   function T(area, equip, sig, type, desc, o) {
     o = o || {};
     var id = area + '.' + equip + '.' + sig;
     var t = {
       id: id, area: area, equip: equip, sig: sig, type: type, desc: desc,
       unit: o.unit || '', dev: o.dev || '', proto: o.proto || '',
-      addr: o.addr || (o.proto && /Modbus/.test(o.proto) ? nextAddr(o.dev, type) : (o.ln || '')),
+      addr: o.addr || (o.proto && /Modbus/.test(o.proto) ? nextAddr(o.dev, type) : /IEC 61850/.test(o.proto || '') ? ln61850(o.dev, sig, type) : (ADDR[o.proto] || '')),
       v: o.v !== undefined ? o.v : (type === 'DI' || type === 'DO' ? 0 : 0),
       dec: o.dec !== undefined ? o.dec : 1,
       alarm: o.alarm || null,
@@ -151,8 +176,6 @@
     T(a, e, 'RLY_HEALTHY', 'DI', r.relay + ' relay healthy', { dev: dev, proto: pr, v: 1, alarm: { on: 0, pri: 1 } });
     T(a, e, 'PROT_50', 'DI', 'ST260E trip 50/51 overcurrent', { dev: dev, proto: pr, alarm: { on: 1, pri: 1 } });
     T(a, e, 'PROT_50N', 'DI', 'ST260E trip 50N/51N earth fault', { dev: dev, proto: pr, alarm: { on: 1, pri: 1 } });
-    T(a, e, 'UPS_ONBATT', 'DI', 'RMU UPS ' + r.ups + ' on battery', { dev: dev, proto: pr, alarm: { on: 1, pri: 3 } });
-    T(a, e, 'UPS_FAIL', 'DI', 'RMU UPS fault', { dev: dev, proto: pr, alarm: { on: 1, pri: 2 } });
     T(a, e, 'COMM', 'DI', 'Fibre link to plant SCADA healthy', { dev: 'SW-' + r.id, proto: 'SNMP', v: 1, alarm: { on: 0, pri: 2 } });
     ['L1', 'L2', 'L3'].forEach(function (p) { T(a, e, 'I_' + p, 'AI', 'AH3 current ' + p, { unit: 'A', dev: dev, proto: pr, dec: 1 }); });
     T(a, e, 'I_N', 'AI', 'AH3 residual current', { unit: 'A', dev: dev, proto: pr, dec: 2 });
@@ -212,6 +235,7 @@
   var pvPr = 'Power-line carrier (PLC) over AC cables → PLC box → Ethernet / Modbus TCP';
   breakerDI('PV', 'LV_ACB', 'PM-PVTX', 'Modbus RTU', 'PV LV ACB 1250A', { racked: true });
   meter3ph('PV', 'POC', 'PM-PVTX', 'Modbus RTU', 0.8, { thd: true });
+  T('PV', 'LV_PNL', 'SPD_FAIL', 'DI', 'PV AC combiner panel (0.8 kV) SPD failed', { dev: 'PM-PVTX', proto: 'Modbus RTU', alarm: { on: 1, pri: 3 } });
   C.pv.inverters.forEach(function (inv) {
     var dev = inv.tag, a = 'PV', e = inv.id;
     T(a, e, 'RUN', 'DI', inv.tag + ' running (grid-connected)', { dev: dev, proto: pvPr });
@@ -222,6 +246,7 @@
     T(a, e, 'DC_SPD', 'DI', inv.tag + ' DC SPD failed', { dev: dev, proto: pvPr, alarm: { on: 1, pri: 3 } });
     T(a, e, 'AC_SPD', 'DI', inv.tag + ' AC SPD failed', { dev: dev, proto: pvPr, alarm: { on: 1, pri: 3 } });
     T(a, e, 'MCCB_ON', 'DI', inv.tag + ' AC ' + inv.mccb + ' ON', { dev: 'PM-PVTX', proto: 'Modbus RTU', v: 1, alarm: { on: 0, pri: 2 } });
+    T(a, e, 'MCCB_TRIP', 'DI', inv.tag + ' AC ' + inv.mccb + ' tripped', { dev: 'PM-PVTX', proto: 'Modbus RTU', alarm: { on: 1, pri: 2 } });
     T(a, e, 'P', 'AI', inv.tag + ' AC active power', { unit: 'kW', dev: dev, proto: pvPr });
     T(a, e, 'Q', 'AI', inv.tag + ' AC reactive power', { unit: 'kvar', dev: dev, proto: pvPr });
     T(a, e, 'PF', 'AI', inv.tag + ' power factor', { dev: dev, proto: pvPr, dec: 2 });
@@ -305,6 +330,13 @@
     T(a, e, 'I_AC', 'AI', p.name + ' AC current', { unit: 'A', dev: dev, proto: bp, dec: 0 });
     T(a, e, 'U_DC', 'AI', p.name + ' DC voltage', { unit: 'V', dev: dev, proto: bp, dec: 0 });
     T(a, e, 'T_IGBT', 'AI', p.name + ' IGBT temperature', { unit: '°C', dev: dev, proto: bp, lim: { hi: 75, hihi: 85 } });
+  });
+  C.bess.pcs.forEach(function (p, i) {
+    var a = 'BESS', e = 'BCP' + (i + 1), nm = 'Battery combiner panel unit ' + (i + 1) + '#';
+    T(a, e, 'SW_CLOSED', 'DI', nm + ' DC switch-disconnector closed', { dev: bd, proto: bp, v: 1, alarm: { on: 0, pri: 2 } });
+    T(a, e, 'FUSE_BLOWN', 'DI', nm + ' DC fuse blown', { dev: bd, proto: bp, alarm: { on: 1, pri: 1 } });
+    T(a, e, 'SPD_FAIL', 'DI', nm + ' DC SPD failed', { dev: bd, proto: bp, alarm: { on: 1, pri: 3 } });
+    T(a, e, 'I_DC', 'AI', nm + ' DC current', { unit: 'A', dev: bd, proto: bp, dec: 0 });
   });
   for (var r = 1; r <= C.bess.racks; r++) {
     var re = 'RACK' + r, rd = 'BMS-R' + r;

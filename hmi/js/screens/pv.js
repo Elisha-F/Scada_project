@@ -20,7 +20,7 @@
         h += ui.card(inv.tag + ' · ' + inv.model + ' · ' + inv.strings + ' strings',
           ui.bar(p + '.P', inv.kw, 'AC power (' + inv.kw + ' kW)') +
           '<div class="grid g2"><div>' + ui.lamp(p + '.RUN', 'Running') + ui.lamp(p + '.STANDBY', 'Derating / standby') + ui.lamp(p + '.FAULT', 'Fault') + ui.lamp(p + '.COMM', 'Comms OK') + '</div><div>' +
-          ui.lamp(p + '.ISO_FLT', 'Insulation fault') + ui.lamp(p + '.DC_SPD', 'DC SPD') + ui.lamp(p + '.AC_SPD', 'AC SPD') + ui.lamp(p + '.MCCB_ON', 'AC MCCB ON') + '</div></div>' +
+          ui.lamp(p + '.ISO_FLT', 'Insulation fault') + ui.lamp(p + '.DC_SPD', 'DC SPD') + ui.lamp(p + '.AC_SPD', 'AC SPD') + ui.lamp(p + '.MCCB_ON', 'AC MCCB ON') + ui.lamp(p + '.MCCB_TRIP', 'AC MCCB tripped') + '</div></div>' +
           ui.kv('Reactive power', p + '.Q') + ui.kv('AC voltage', p + '.U_AC') + ui.kv('AC current', p + '.I_AC') + ui.kv('Frequency', p + '.F') + ui.kv('DC power', p + '.P_DC') + ui.kv('DC voltage', p + '.U_DC') +
           ui.kv('Efficiency', p + '.EFF') + ui.kv('Internal temp.', p + '.T_INT') + ui.kv('Insulation R', p + '.R_ISO') + ui.kv('Energy today', p + '.E_DAY') + ui.kv('Energy total', p + '.E_TOT') +
           ui.kv('P limit', p + '.SP_PLIM') + ui.kv('PF setpoint', p + '.SP_PF') +

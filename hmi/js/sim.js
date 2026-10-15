@@ -349,7 +349,8 @@
     lag('BESS.SYS.T_CELL_MAX', get('BESS.HVAC.T_CABIN') + 2 + Math.abs(Pbess) / 950 * 6, 0.004 * dt);
     set('BESS.SYS.T_CELL_MIN', get('BESS.SYS.T_CELL_MAX') - 3.1);
     set('BESS.HVAC.HUM', 48 + noise(1));
-    C.bess.pcs.forEach(function (pc) {
+    C.bess.pcs.forEach(function (pc, i) {
+      set('BESS.BCP' + (i + 1) + '.I_DC', bessForming ? Pbess / 2 * 1000 / udc : 0);
       var p = 'BESS.' + pc.id, P = Pbess / 2;
       set(p + '.P', bessForming ? P : 0); set(p + '.Q', bessForming ? 30 : 0);
       set(p + '.U_AC', bessForming ? 690 + noise(2) : 0); set(p + '.I_AC', Math.abs(P) / (SQ3 * 0.69));
@@ -407,7 +408,7 @@
       set(r + '.I_N', I * 0.02);
       set(r + '.VPIS_DX11', busLive && on('GIS.' + (x[0] === 'RMU_PRES' ? 'AH4' : 'AH6') + '.CB_CLOSED') ? 1 : 0);
       set(r + '.VPIS_DX13', x[3] || (on(r + '_AH3.CB_CLOSED') && get(r + '.VPIS_DX11')) ? 1 : 0);
-      set(r + '.UPS_ONBATT', get(r + '.VPIS_DX11') ? 0 : 1);
+      set(x[0] === 'RMU_PRES' ? 'AUX.UPS_RMUP.ON_BATT' : 'AUX.UPS_RMUM.ON_BATT', get(r + '.VPIS_DX11') ? 0 : 1);
       lvWrite(x[2], P, x[3], f);
     });
     lvWrite('AUXPNL', Laux, auxOn, f);
@@ -427,7 +428,6 @@
     set('AUX.UPS_SCADA.AUTONOMY', auxOn ? Math.min(95, get('AUX.UPS_SCADA.AUTONOMY') + dt / 60) : Math.max(0, get('AUX.UPS_SCADA.AUTONOMY') - dt / 60));
     set('AUX.UPS_SCADA.BATT_LOW', get('AUX.UPS_SCADA.AUTONOMY') < 15 ? 1 : 0);
     set('AUX.UPS_SCADA.LOAD', 38 + noise(1));
-    set('AUX.UPS_RMUP.ON_BATT', get('RMU.RMU_PRES.UPS_ONBATT')); set('AUX.UPS_RMUM.ON_BATT', get('RMU.RMU_PM.UPS_ONBATT'));
 
     /* ---- fire ---- */
     if (sim.faults.FIRE_STAGE) {
@@ -461,7 +461,7 @@
     /* comm-loss fault */
     var pmComm = !sim.faults.COMM_PM;
     set('NET.N17.OK', pmComm ? 1 : 0); set('RMU.RMU_PM.COMM', pmComm ? 1 : 0);
-    S.tagOrder.forEach(function (id) { if (id.indexOf('RMU.RMU_PM') === 0 && id !== 'RMU.RMU_PM.COMM') T[id].q = pmComm ? 'GOOD' : 'BAD'; });
+    S.tagOrder.forEach(function (id) { if ((id.indexOf('RMU.RMU_PM') === 0 || id.indexOf('AUX.UPS_RMUM.') === 0) && id !== 'RMU.RMU_PM.COMM') T[id].q = pmComm ? 'GOOD' : 'BAD'; });
     set('NET.SEC.FW_DENY', 3 + Math.round(Math.abs(noise(2))));
   }
 

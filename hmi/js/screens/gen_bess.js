@@ -84,7 +84,7 @@
           ui.kv('Charge limit', sys + '.P_CHG_MAX') + ui.kv('Discharge limit', sys + '.P_DIS_MAX') + ui.kv('Energy charged', sys + '.E_CHG') + ui.kv('Energy discharged', sys + '.E_DIS') + ui.kv('Equivalent cycles', sys + '.CYCLES')) +
         ui.card('Single line', bessSld() + '<div class="grid g2" style="margin-top:6px">' + C.bess.pcs.map(function (pc) {
           var p = 'BESS.' + pc.id;
-          return '<div><h4>' + pc.name + '</h4>' + ui.lamp(p + '.RUN', 'Running') + ui.lamp(p + '.FAULT', 'Fault') + ui.lamp(p + '.ACB_CLOSED', 'AC breaker closed') + ui.lamp(p + '.DC_SW', 'DC switch closed') +
+          return '<div><h4>' + pc.name + '</h4>' + ui.lamp(p + '.RUN', 'Running') + ui.lamp(p + '.FAULT', 'Fault') + ui.lamp(p + '.ACB_CLOSED', 'AC breaker closed') + ui.lamp(p + '.DC_SW', 'DC switch closed') + ui.lamp('BESS.BCP' + pc.id.slice(-1) + '.SW_CLOSED', 'BCP DC switch closed') + ui.lamp('BESS.BCP' + pc.id.slice(-1) + '.FUSE_BLOWN', 'BCP fuse blown') + ui.kv('BCP DC current', 'BESS.BCP' + pc.id.slice(-1) + '.I_DC') +
             ui.kv('U AC', p + '.U_AC') + ui.kv('I AC', p + '.I_AC') + ui.kv('U DC', p + '.U_DC') + '</div>';
         }).join('') + '</div>') +
         ui.card('Cells, HVAC &amp; control', ui.kv('Max cell temp.', sys + '.T_CELL_MAX') + ui.kv('Min cell temp.', sys + '.T_CELL_MIN') + ui.kv('Max cell voltage', sys + '.U_CELL_MAX') + ui.kv('Min cell voltage', sys + '.U_CELL_MIN') +

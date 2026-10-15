@@ -38,7 +38,7 @@ open string, cloud, fibre loss…) and change simulation speed – useful for FA
 * `docs/Annex_A_IO_List.xlsx` – Annex A, the I/O list as a formatted Excel workbook (summary + full list).
   Rebuild with `node tools/export-io-list.js && python3 tools/io_list_xlsx.py`.
 * `docs/Annex_B_Screens/` – Annex B, HMI screen captures.
-* `docs/IO_List.csv` – 1,164-point I/O list (AI / DI / AO / DO, device, protocol, address / IEC 61850 LN,
+* `docs/IO_List.csv` – 1,173-point I/O list (AI / DI / AO / DO, device, protocol, address / IEC 61850 LN,
   alarm priority, limits). Regenerate with `node tools/export-io-list.js`.
 
 ## Structure

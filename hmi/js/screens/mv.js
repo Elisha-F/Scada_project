@@ -91,7 +91,7 @@
           '<div class="grid g3" style="margin-top:8px"><div><h4>Switchgear</h4>' + ui.lamp(pre + '.AH1_CLOSED', 'AH1 closed') + ui.lamp(pre + '.AH1_EARTHED', 'AH1 earthed') + ui.lamp(pre + '.AH2_EARTHED', 'AH2 earthed') +
           ui.lamp(pre + '.QK11_EARTHED', 'QK11 earthed') + ui.lamp(pre + '.VPIS_DX11', 'DX11 voltage') + ui.lamp(pre + '.VPIS_DX13', 'DX13 voltage') + ui.lamp(pre + '.SF6_LOW', 'SF6 low') + '</div>' +
           '<div><h4>Protection / UPS</h4>' + ui.lamp(pre + '.RLY_HEALTHY', 'ST260E healthy') + ui.lamp(pre + '.PROT_50', '50/51 trip') + ui.lamp(pre + '.PROT_50N', '50N/51N trip') +
-          ui.lamp(pre + '_AH3.TCS_FAIL', 'TCS fail') + ui.lamp(pre + '.UPS_ONBATT', 'UPS on battery') + ui.lamp(pre + '.UPS_FAIL', 'UPS fault') + ui.lamp(pre + '.COMM', 'Fibre link OK') + '</div>' +
+          ui.lamp(pre + '_AH3.TCS_FAIL', 'TCS fail') + ui.lamp('AUX.' + (i ? 'UPS_RMUM' : 'UPS_RMUP') + '.ON_BATT', 'UPS on battery') + ui.lamp('AUX.' + (i ? 'UPS_RMUM' : 'UPS_RMUP') + '.FAULT', 'UPS fault') + ui.lamp(pre + '.COMM', 'Fibre link OK') + '</div>' +
           '<div><h4>Measurements</h4>' + ui.kv('I L1', pre + '.I_L1') + ui.kv('I L2', pre + '.I_L2') + ui.kv('I L3', pre + '.I_L3') + ui.kv('I residual', pre + '.I_N') +
           ui.kv('TX load', tx + '.LOAD') + ui.kv('TX oil temp', tx + '.T_OIL') + ui.kv('TX winding temp', tx + '.T_WDG') + '</div></div>' +
           '<div class="btnrow">' + ui.btn('OPEN QF11', pre + '_AH3', 'open', 'b-green') + ui.btn('CLOSE QF11', pre + '_AH3', 'close', 'b-red') + ui.btn('RESET', pre, 'reset', 'b-gray') + '</div>');
