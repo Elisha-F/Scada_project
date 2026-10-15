@@ -416,7 +416,7 @@
     /* ---- transformers ---- */
     var txP = { DGTX: Pdg, PVTX: Ppv, BESSTX: Math.abs(Pbess), PRESTX: Lpres, PMTX: Lpm, AUXTX: Laux };
     C.transformers.forEach(function (tx) {
-      var p = 'TX.' + tx.id, ld = txP[tx.id] / 0.92 / tx.kva;
+      var p = 'TX.' + tx.id, ld = txP[tx.id] / ({ PVTX: 0.99, BESSTX: 0.99, DGTX: 0.9 }[tx.id] || 0.92) / tx.kva;
       set(p + '.LOAD', ld * 100);
       lag(p + '.T_OIL', Tamb + 6 + 45 * ld * ld, 0.0015 * dt);
       lag(p + '.T_WDG', get(p + '.T_OIL') + 4 + 18 * ld * ld, 0.01 * dt);
