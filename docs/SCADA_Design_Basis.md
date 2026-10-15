@@ -2,7 +2,7 @@
 
 **Project:** Solarization Villa Somalia · **Client:** Ministry of Energy & Water Resources – Somalia
 **Contractor:** Blueflag Energy Co. Ltd · **Drawing set analysed:** BFE/PR/26/01 (`VILLA_SOMALIA_05_10_2026.pdf`, 25 sheets)
-**Status:** For approval – HMI V1.0
+**Status:** HMI V2.0 – aligned with *Villa Somalia SCADA Design Report* Rev 1 and *Device and I/O List* Rev 1 (Blueflag). Where this note and the design report differ, the design report governs.
 
 ---
 
@@ -34,33 +34,23 @@
 
 ## 2. Client comments → where they are answered
 
-| # | Client requirement | Answer in this submission | Status |
+| # | Client requirement | Answer | Status |
 |---|---|---|---|
-| 1 | Complete SCADA design aligned with BESS and PV, GIS combiner, LVDBs, generators, etc. | HMI with 23 screens covering every item of the SLD (Overview, 11 kV GIS, Protection & NECR, Remote RMUs, Generators, BESS, Racks, PV inverters, Strings, Weather, President LVDB, P.M. LVDB, Aux & UPS, Fire, PPC, Sequences, Network, Alarms, Events, Trends, I/O list, Users) | **Done** (HMI V1.0) |
-| 2 | Complete I/O list – all analogue & digital signals of the entire plant: VCBs, GIS relays, inverter transformers, RMU, DGs, combiner panels, weather station, UPS, aux power, fire detection & suppression | `docs/IO_List.csv` – **1,173 points** (578 AI, 510 DI, 20 AO, 65 DO) with source device, protocol, address / IEC 61850 LN, alarm priority and limits. Generated from the same tag database that drives the screens (`node tools/export-io-list.js`), and browsable live on the *I/O LIST* screen | **Done** – addresses to be finalised with vendor register maps |
-| 3 | Communication architecture, protocols, network topology, cybersecurity, integration with GIS, LVDBs, generators, PV, BESS | *OVERVIEW → Network & Cybersecurity* screen + §4 below | **Proposed** – for approval |
-| 4 | Data sheets for PPC controllers, field devices, servers, HMI and operational sequence | Operational sequences: *PPC → Operating Sequences* screen + §5. Data-sheet register: §6 | Sequences **done**; data sheets **to be supplied by vendors** |
+| 1 | Complete SCADA design aligned with BESS and PV, GIS combiner, LVDBs, generators | Design report Rev 1 + the HMI in `hmi/` (17 screens: overview, 11 kV switchboard, President and PM stations, PV, battery, generators, energy management, auxiliaries, alarms, event log, trends, reports, communication status, I/O list, users, simulation) | **Done** |
+| 2 | Complete I/O list – all analogue and digital signals: VCBs, GIS relays, transformers, RMUs, DGs, combiner panels, weather station, UPS, aux power, fire | `docs/Villa_Somalia_SCADA_Device_and_IO_List_Rev1.xlsx`: **244 hardwired points** (208 DI, 32 DO, 4 AI) on six SICAM I/O rows with module and channel, and **456 communication points** (433 read, 23 write) with a tag per point on the *Comms Point List* sheet. The HMI loads the same 700 tags (`tools/import_io_list.py`) | **Done** – register addresses to be filled from vendor maps |
+| 3 | Communication architecture, protocols, topology, cybersecurity | Design report sections 7–9; *SYSTEM → Communication status* screen; §4 below | **Done** – for approval |
+| 4 | Data sheets for controllers, field devices, servers, HMI; operational sequence | Design report sections 5–6 (equipment and EMS rules) and §5–6 below | Sequences **done**; vendor data sheets to be attached |
 
-### I/O point count by area
+### Point count (I/O list Rev 1)
 
-| Area | AI | DI | AO | DO |
-|---|---:|---:|---:|---:|
-| 11 kV GIS combiner panel (8 panels, bus, NECR, DC, room) | 118 | 167 | 0 | 24 |
-| Transformers (6) | 18 | 31 | 0 | 0 |
-| Remote RMUs (President / P.M.) | 8 | 36 | 0 | 4 |
-| LV distribution boards (2 × 10-way + aux panel) | 73 | 76 | 0 | 6 |
-| Diesel generators | 44 | 44 | 2 | 12 |
-| PV plant / inverters (incl. 81 string currents, 48 MPPT voltages, AC combiner) | 195 | 43 | 8 | 10 |
-| Weather station | 9 | 2 | 0 | 0 |
-| BESS (system, 2 PCS, 2 battery combiner panels, 8 racks, HVAC) | 94 | 43 | 4 | 5 |
-| Fire detection & suppression (5 zones) | 2 | 35 | 0 | 2 |
-| UPS & auxiliary | 3 | 12 | 0 | 0 |
-| Communications & cybersecurity | 1 | 19 | 0 | 0 |
-| Power plant controller | 13 | 2 | 6 | 2 |
+| | DI | DO | AI | AO / write | Total |
+|---|---:|---:|---:|---:|---:|
+| Hardwired (SICAM I/O rows 1–6, 27 % spare overall) | 208 | 32 | 4 | – | 244 |
+| Communication (read) | | | | | 433 |
+| Communication (write: commands and setpoints) | | | | | 23 |
+| **Total** | | | | | **700** |
 
-| **Total (1,173)** | **578** | **510** | **20** | **65** |
-
-(The I/O LIST screen and `Plant Information` screen always show the live count.)
+The HMI *SYSTEM → I/O list* screen shows every point with its row, module and channel (hardwired) or protocol source (communication), its alarm level and its live value.
 
 ---
 
@@ -75,87 +65,68 @@
 | 5 | 14 Switchgear config | AH7 and AH8 are both designated **QL17 / QF17** | AH8 → QL18 / QF18 (used in HMI) |
 | 6 | 14 Switchgear config | AH5 SAT feeder has no ZSCT and no surge arrester; AH8 CT ratio 1250/1 for an NER feeder | Confirm |
 | 7 | 13 SLD | DG2 ACB Icu "66 kA" vs DG1 "65 kA"; ACB Ir/Isd "xx" | Match actual ACB data on site (as noted on drawing) |
-| 8 | 15 Comm. schematic | Only inverters and weather station shown. **GIS relays, BESS EMS/PCS/BMS, DG controllers, RMUs, LVDB meters, fire panel, UPS, PPC, servers, firewall and time sync are missing**; "Powerplant RTU" undefined | Replace with the architecture in §4 |
+| 8 | 15 Comm. schematic | Only inverters and weather station shown. **GIS relays, BESS EMS/PCS/BMS, DG controllers, RMUs, LVDB meters, fire panel, UPS, plant controller, servers, firewall and time sync are missing**; "Powerplant RTU" undefined | Replace with the architecture in §4 |
 | 9 | 13 / 15 | Inverter communication is **power-line carrier (PLC)** over the AC cables to the PLC box (63 A "PLC Communication Circuit" on the PV LV bus), then Ethernet to the switch. Sheet 15 draws RS485 IN/OUT daisy-chain links instead | Redraw sheet 15 as PLC over AC cables → PLC box → Ethernet; keep RS485 only if retained as a commissioning / backup port |
 | 10 | 13/14 | GIS feeder protection relay make/model not stated (RMUs use Zhuhai Strom ST260E) | Select relay with IEC 61850 Ed.2 (MMS + GOOSE) |
 | 11 | 13 | Step-up transformers (1.5 MVA DG, 1.5 MVA PV, 1 MVA BESS) – oil or dry type, temperature / Buchholz devices not shown | Confirm; I/O list includes temperature, Buchholz/PRD, oil level |
 | 12 | 13 | All 11 kV sources are delta on the HV side → the 11 kV system is earthed **only** through AH8 NECR | Add interlock / alarm: AH3 and AH1 should not energise the bus with AH8 open (black-start step 3 closes AH8 first) |
 | 13 | 13 | Remote RMUs at the President / P.M. offices – no communication medium shown | Single-mode fibre laid in the 11 kV cable trenches, ring topology |
 | 15 | 13 / 14 | No voltage transformers shown on the 11 kV GIS panels or busbar (only DXN voltage presence indicators), yet voltage metering and 27/59/81 protection need them | Add a busbar VT panel or line VTs on the incomers; confirm per-panel voltage metering |
-| 14 | – | DG controller, BESS EMS/PCS, PPC, SCADA server, fire panel and UPS vendors not stated | Provide data sheets (§6) |
+| 14 | – | DG controller, BESS EMS/PCS, SCADA server, fire panel and UPS vendors not stated | Provide data sheets (§6) |
 
 ---
 
-## 4. Communication architecture (proposed)
+## 4. Communication architecture
 
-Purdue-model zoning to IEC 62443-3-2 (shown live on the *Network & Cybersecurity* screen):
+As in design report section 7:
 
-* **Level 3.5 – DMZ:** NGFW/VPN gateway with IDS & DPI (Modbus/IEC 61850), read-only historian replica / client portal, meteocontrol VCOM via outbound-only 4G router.
-* **Level 2 – Control room:** redundant SCADA servers A/B (hot standby), historian, 2 operator HMI workstations, engineering workstation, GPS time server (NTP + PTP IEEE 1588), 3 kVA SCADA UPS; two managed L3 core switches in an RSTP/PRP ring.
-* **Level 1 – Station:** PPC (redundant CPU), 8 GIS feeder relays on an IEC 61850 station bus (PRP/HSR), blue'Log XM 5000 + Multi I/O + Fieldbus Ext (weather station only), inverter PLC box (power-line carrier from the PV inverters, Ethernet uplink), BESS EMS/PCS, DG controllers, aux PLC/DC charger, meter gateway, fire alarm panel, fibre field switches at the ESS cabin and DG/NECR area.
-* **Level 0 – Field:** SG350HX inverters (power-line carrier over the 0.8 kV AC cables to the PLC box), weather sensors (SMP12-A, Gill WindSonic, PT1000 ambient & module), BMS racks, genset ECUs, LV meters; remote RMUs (ST260E + managed switch + UPS) on single-mode fibre.
+* **Controller:** Siemens SICAM A8000 **CP-8050** in the 11 kV switchroom SCADA cabinet, acting as plant controller and gateway. It talks to the SCADA servers by **IEC 60870-5-104**.
+* **SCADA:** SICAM SCC on **two servers (A active, B hot standby)**, one operator workstation, one engineering laptop.
+* **Network:** two core switches (Moxa EDS-G512E); single-mode **fibre ring** through the field switches SW-MV (inverter station), SW-BESS, SW-GEN, SW-PRS and SW-PMS; firewall with VPN for remote support (off by default); GPS time server (NTP).
+* **Hardwired I/O:** six SICAM I/O rows. Row 1 (switchroom, backplane) and row 2 (SCADA cabinet, copper) are local; rows 3–6 (President station, PM station, BESS yard, generators) are on dedicated fibre pairs.
+* **Field devices:** 11 kV relays AH1–AH7 by IEC 61850 or Modbus TCP; PV inverters by **power line communication to the PLC box**, then Modbus TCP; battery data **through the EMS**; generator controllers by Modbus; RMU relays ST260E by Modbus RTU through MGate gateways; LVDB meters PM5560; weather station on the blue'Log XM (weather station only); UPS by SNMP / Modbus.
 
-| Equipment | Protocol | Medium | Update |
-|---|---|---|---|
-| GIS relays AH1–AH8 | IEC 61850 MMS reports, GOOSE for interlocks/intertrip | Fibre, PRP | event + 1 s integrity |
-| Remote RMU ST260E | Modbus TCP (IEC 61850 if supported) | SM fibre ring | 1 s |
-| PV inverters | Power-line carrier (PLC) → PLC box → Ethernet / Modbus TCP | 0.8 kV AC cables + Cat6 | 5 s |
-| Weather station (only device on the blue'Log) | Fieldbus Ext → blue'Log XM 5000 → Modbus TCP | RS485 / PT1000 | 1 s, 1 min avg |
-| BESS EMS / PCS / BMS | Modbus TCP (IEC 60870-5-104 optional) | Fibre | 200 ms control / 1 s |
-| DG controllers | Modbus TCP | Fibre / Cat6 | 500 ms |
-| LV meters, ACB trip units | Modbus RTU via gateway | RS485 | 1 s |
-| Fire alarm panel | Modbus TCP + hard-wired cause & effect | Cat6 + control cable | 1 s |
-| UPS, switches | SNMP v3 | Cat6 | 10 s |
-| Upstream / remote | OPC UA (encrypted), HTTPS, IPsec VPN | via DMZ | – |
-
-**Cybersecurity provisions:** zones & conduits with default-deny firewalls; no direct Internet to L1/L2; MFA VPN to a jump host with session recording; RBAC (Viewer / Operator / Engineer / Admin) with individual AD/LDAP accounts; tamper-evident audit trail to syslog/SIEM; select-before-operate and interlocks on all switching, earthing switches local-only; device hardening (unused ports off, SNMP v3, no default passwords, no Telnet/HTTP); application whitelisting and USB lock-down; patch & vulnerability management; daily/weekly configuration backups with an off-line copy; industrial IDS on the core mirror port; physical access control & CCTV on its own VLAN; cybersecurity FAT/SAT and penetration test; IEC 62351 where supported.
-
----
-
-## 5. Operational sequences (PPC)
-
-Implemented in the simulator (`hmi/js/sim.js`) and shown live on *PPC → Plant Controller / Operating Sequences*.
-
-1. **Normal – PV + BESS:** BESS PCS grid-forming (VSG droop) sets 11 kV V/f; PV at MPPT; PPC reduces the inverter P-limit when SOC ≥ curtailment SOC (95 %) or the BESS charge limit is reached.
-2. **DG assist / recharge:** SOC < 25 % or load > 90 % of BESS discharge limit → start lead DG (DG1, else DG2): crank → warm-up 20 s → synchronise on the 0.4 kV bus → close Q1/Q2 → load to 75 % and recharge BESS. Second DG if residual load > BESS limit + 400 kW. Stop at SOC > 80 % after 30 min minimum run → open ACB → 5 min cool-down.
-3. **BESS unavailable:** lead DG grid-forming, lag DG load-shares; PV limited to keep DG ≥ 30 % (reverse power 32 on AH1); load shedding if load > DG capacity. When the BESS becomes available again the PPC re-synchronises the PCS and closes AH3 automatically.
-4. **Black-start** (automatic after 10 s dead bus, or operator): verify no blocking faults → open feeders AH2/4/5/6 → **close AH8 NECR** → start grid-forming source (BESS, else lead DG) → check 11 kV ±5 %, 50 Hz ±0.5 % → close AH5 (aux) → AH4 (President, critical) → AH6 (P.M.) → AH2 (PV, inverters reconnect after 60 s) → hand over to AUTO.
-5. **ESD:** push-button / SCADA / confirmed GIS-room fire → trip all 11 kV VCBs, stop PCS and DGs; restart only after authorised reset + black-start.
-6. **BESS fire cause & effect:** pre-alarm → alarm, exhaust fans ON, HVAC recirculation; confirmed fire → stop PCS, trip AH3 + BESS ACB, 30 s countdown then agent release (unless inhibited), PPC to DG operation.
-7. **Load shedding:** stage 1 non-essential P.M. ways; stage 2 under-frequency 49.0 Hz/2 s opens AH6; AH4 (President) shed last; automatic restoration after 5 min stable.
-
-All setpoints (25 / 80 / 95 % SOC, 30 % DG minimum load, PF target) are editable at ENGINEER level on the PPC screen.
-
----
-
-## 6. Data-sheet register (to be supplied by vendors)
-
-| Item | Requirement for selection | Status |
+| Link | Protocol | Medium |
 |---|---|---|
-| Power plant controller | Redundant CPU, ≤ 200 ms control cycle, grid-forming BESS coordination, DG dispatch, Modbus TCP / IEC 61850 / IEC 104 | Vendor data sheet required (PPC vendor to be confirmed) |
-| SCADA servers A/B | Industrial rack servers, redundant PSU/RAID, hot-standby redundancy, historian ≥ 5 years at 1 s | Required |
-| HMI / engineering workstations | 2 × operator + 1 × engineering, dual monitors | Required |
-| GIS feeder protection relays | IEC 61850 Ed.2 MMS + GOOSE, 50/51, 50N/51N, 51G, 46, 27/59, 81, 32, 86, TCS | Required |
-| ST260E RMU relay (Zhuhai Strom) | Comms option (Modbus / IEC 61850) | Required |
-| Core / field switches | Managed L3/L2, IEC 61850-3 / IEEE 1613, RSTP/PRP, SFP fibre ports | Required |
-| Firewall / VPN gateway | NGFW with industrial DPI, IPsec, MFA | Required |
-| GPS time server | NTP + PTP IEEE 1588 | Required |
-| blue'Log XM 5000, Multi I/O, Fieldbus Ext (weather station logger) | – | Available from meteocontrol |
-| Inverter PLC box (Sungrow, power-line carrier) | Max. inverters per box, Ethernet Modbus TCP register map | Required |
-| Sungrow SG350HX | Modbus register map | Available from Sungrow |
-| SMP12-A, Gill WindSonic, PT1000 sensors | – | Available |
-| BESS EMS / PCS / BMS | Modbus TCP register map, grid-forming capability, black-start | Required |
-| DG controllers | Modbus TCP, auto-sync, load sharing | Required |
-| LV multifunction meters / ACB trip units | Modbus RTU | Required |
-| Fire alarm panel & suppression | EN 54 / NFPA 72, Modbus TCP, BESS off-gas detection | Required |
-| UPS 3 kVA (SCADA) / 2 kVA (RMUs) | SNMP v3 / dry contacts | Required |
+| CP-8050 → SCADA servers A/B | IEC 60870-5-104 | Ethernet, both core switches |
+| CP-8050 → 11 kV relays | IEC 61850 / Modbus TCP | Ethernet |
+| PV inverters → PLC box | Power line communication | AC cables |
+| CP-8050 → PLC box, EMS, generator controllers, meters, weather logger | Modbus TCP | Fibre ring |
+| CP-8050 → ST260E | Modbus RTU via MGate | RS485 + fibre ring |
+| CP-8050 → I/O rows 3–6 | SICAM I/O link, optical | Fibre pair |
+| Network devices → SCADA | SNMP v3, syslog | Ethernet |
+
+**Cybersecurity** (design report section 9): firewall between plant and outside networks; remote access only by VPN, enabled per session by an Admin and logged; individual accounts with two roles; password and lockout rules; unused ports disabled; time-synchronised logs; configuration backups.
+
+---
+
+## 5. Operating rules (embedded EMS)
+
+The battery EMS dispatches the plant; the CP-8050 and SCADA monitor it and pass Admin setpoints. Rules in the HMI simulator (`hmi/js/sim.js`) follow design report section 6:
+
+1. **Day, PV surplus:** battery forms the grid and charges; PV curtailed when the battery is full.
+2. **Day, PV shortfall / night:** battery forms the grid and discharges.
+3. **Low battery:** the lead generator starts when SOC falls **below 20 %** and stops at **80 %** (or when PV covers the load). The **second generator starts when load exceeds 80 % of the running one**.
+4. **Generator only** (battery unavailable, e.g. battery fire): a generator forms the grid; PV limited to keep the generator above minimum load.
+5. **Manual:** generators started and stopped by an Operator, only with the generator in manual mode (mode change by Admin).
+6. **Emergency stop:** hardwired only. Push-buttons in the switchroom and battery area stop the battery, PV and generators through hardwired circuits and are reset locally; the SCADA only displays them and has no software ESD.
+7. **Faults:** level 3 faults are reset by an Operator through the EMS; level 1 and 2 faults by an Admin. Protection trips are reset at the relay; a remote close stays blocked until then.
+8. **Neutral earthing:** AH8 is the only earthing of the 11 kV system. Closing AH1 (generators) or AH3 (battery) is blocked while AH8 is open; in black start AH8 is closed first.
+
+---
+
+## 6. Data-sheet register
+
+Per design report section 5 and the *Device List* sheet: SICAM A8000 CP-8050 and I/O modules (DI-8112, DO-8221, DO-8212, AI-8320, CI-8532/8533), SICAM SCC servers, Moxa EDS-G512E and field switches, MGate gateways, Schneider PM5560 meters, Siemens SITOP PSU8200, firewall, GPS time server, UPS; vendor data for the 11 kV relays, ST260E, Sungrow SG350HX and PLC box, Sungrow ST3340UX and EMS, generator controllers and the blue'Log XM. Register maps are needed from Sungrow (inverters, EMS), the generator controller vendor and Strom (ST260E) to fill the communication addresses.
 
 ---
 
 ## 7. HMI design notes
 
-* High-performance HMI style: muted background, colour reserved for state and alarms. Breaker convention **red = closed, green = open**, matching the DHYBRID screens already used by Blueflag on site. Energised conductors dark blue, de-energised grey.
-* Every value has a quality flag – bad quality shows `###` in magenta (communication loss is demonstrated on the P.M. RMU fibre link).
-* Alarm management to ISA-18.2: 4 priorities, alarm banner with the newest unacknowledged alarm, acknowledge per alarm or all, cleared-unacknowledged state, event log with user attribution and CSV export.
-* Controls: faceplate → select-before-operate → execute within 30 s; interlocks listed live in the faceplate (earth switch, 3-pos switch, spring, lockout 86, SF6 low-low, L/R, relay healthy, TCS, ESD, BESS fire, DG sync).
+* Muted background; colour is used for state and alarms. Breaker convention **red = closed, green = open**, as on the DHYBRID screens already used on site. Live conductors dark blue, dead grey.
+* **Every tag name on the screens is the tag in I/O list Rev 1** (for example `AH1-CB-CLSD`, `BESS-SOC`, `EMS-GEN-START-SP`); hovering a signal shows its tag.
+* Every value carries a quality flag: bad or stale data shows `###` in magenta (demonstrated by cutting the fibre to the PM station).
+* **Three alarm levels** (1 critical, 2 major, 3 minor) taken from the I/O list; alarm banner, acknowledge per alarm or all, cleared-unacknowledged state, event log with the user who acted.
+* **Two roles:** Operator (view, acknowledge, switch breakers, start/stop generators in manual, reset level 3 faults) and Admin (all of that plus EMS mode and setpoints, C-rate limit, generator mode, inverter commands, users, VPN, exports).
+* Commands: faceplate → select → confirm within 30 s; interlocks shown live (earth switch, relay trip not reset, local/remote, gas pressure, AH8 open for AH1/AH3).
 * Trends: single value axis, up to three pens of the same unit, crosshair tooltip and table view.

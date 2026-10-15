@@ -226,3 +226,15 @@ svg g[data-c=bad] rect, svg g[data-c=bad] circle { fill: var(--bad); }
 svg g.tripmark[data-c=off] circle { display: none; } svg g.tripmark[data-c=amber] circle, svg g.tripmark[data-c=red] circle { fill: var(--trip); }
 .card + .card, aside > .card { margin-top: 0; } aside > * + * { margin-top: 12px; }
 .wide2 { grid-column: 1 / -1; } .wide2 svg.sld { max-height: 260px; }
+
+/* ---- I/O list Rev1 architecture: alarm levels, earth switches, tag captions ---- */
+.lvl1 { background: var(--p1); } .lvl2 { background: var(--p2); } .lvl3 { background: #c79a00; } .lvl0 { background: #9aa5af; }
+.s-faulty { background: var(--p1); } .s-moving { background: #c79a00; color: #000; } .s-unknown { background: var(--bad); }
+svg g.es line { stroke: #9aa5af; stroke-width: 2; }
+svg g.es[data-c=blue] line { stroke: #e0a800; stroke-width: 2.6; }
+svg g.es[data-c=bad] line { stroke: var(--bad); }
+svg g.vp[data-c=red] circle { fill: var(--p1); stroke: #8c1d18; } svg g.vp[data-c=amber] circle { fill: var(--trip); stroke: #9a6a00; }
+svg g.vp[data-c=bad] circle { fill: var(--bad); }
+.ktag { font-size: 10px; color: var(--muted); font-family: ui-monospace, Consolas, monospace; margin-top: 2px; }
+tr.cur td { background: #e7f0fb; font-weight: 700; } tr.cur td:first-child { box-shadow: inset 4px 0 0 var(--live); }
+.lamp { cursor: default; }

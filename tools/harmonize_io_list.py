@@ -216,8 +216,8 @@ CODE = {
 }
 # (level, alarm state) for status points; measured values carry no alarm here
 ALARM = [
-    (r'TRIP-|SHUTDOWN|^FIRE$|ALM-L1|BCP\d-FUSE', '1', 'On'), (r'RLY-HEALTHY|^HEALTHY$|COMM-OK|RING-OK|PS\d-OK|ROW\d-OK|LINK\d-OK', '2', 'Off'),
-    (r'TCS-ALM|ALM-L2|^ALM$|^FLT$|ON-BATT|BCP\d-SW-CLSD', '2', 'On'), (r'WARN|ALM-L3|PV-CURT|GEN-START-REQ|DREC|VPN-ACTIVE', '3', 'On'),
+    (r'TRIP-|SHUTDOWN|^FIRE$|ALM-L1|BCP\d-FUSE', '1', 'On'), (r'RLY-HEALTHY|^HEALTHY$|COMM-OK|RING-OK|PS\d-OK|ROW\d-OK|LINK\d-OK|BCP\d-SW-CLSD', '2', 'Off'),
+    (r'TCS-ALM|ALM-L2|^ALM$|^FLT$|ON-BATT', '2', 'On'), (r'WARN|ALM-L3|PV-CURT|GEN-START-REQ|DREC|VPN-ACTIVE', '3', 'On'),
     (r'TIME-SYNC', '3', 'Off'),
 ]
 if 'Comms Point List' in wb.sheetnames:
@@ -249,6 +249,8 @@ for li, (v, _) in enumerate(crows):
             cc = c
             if dev.startswith('Firewall') and point.startswith('Time synchronised'):
                 cc = 'TIME-SYNC' if inst == 'GPS' else 'VPN-ACTIVE'
+            if inst.endswith('-RLY') and cc.startswith('RLY-'):
+                cc = cc[4:]
             tag = inst + '-' + cc
             note = v[10] if v[10] else None
             if tag in tags:

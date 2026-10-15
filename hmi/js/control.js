@@ -1,103 +1,135 @@
 /*
- * Command layer: user levels, interlocks, select-before-operate, audit trail.
- * All operator commands go through S.command() so interlocks and logging are
- * enforced in one place.
+ * Commands: user roles, interlocks, select-before-operate, audit trail
+ * (design report section 10). Two roles: Operator and Admin. Who may operate a
+ * command tag comes from the 'Operated by' column of the submitted I/O list.
  */
 (function (S) {
-  var T = S.tags;
-  function on(id) { return T[id] && !!T[id].v; }
+  var M = S.mtags;
+  function on(id) { return M[id] && !!M[id].v; }
 
   S.users = {
-    viewer:   { name: 'viewer',   level: 1, label: 'VIEWER' },
-    operator: { name: 'operator', level: 2, label: 'OPERATOR' },
-    engineer: { name: 'engineer', level: 3, label: 'ENGINEER' },
-    admin:    { name: 'admin',    level: 4, label: 'ADMIN' }
+    operator: { name: 'operator', level: 1, label: 'OPERATOR' },
+    admin: { name: 'admin', level: 2, label: 'ADMIN' }
   };
   S.user = S.users.operator;
+  var NEED = { Operator: 1, Admin: 2 };
 
   S.events = [];
-  S.event = function (src, msg, pri) {
-    S.events.unshift({ t: S.sim ? S.sim.t : Date.now(), src: src, msg: msg, pri: pri || 4, user: S.user ? S.user.label : '' });
+  S.event = function (src, msg, level) {
+    S.events.unshift({ t: S.sim ? S.sim.t : Date.now(), src: src, msg: msg, level: level || 0, user: S.user ? S.user.label : '' });
     if (S.events.length > 2000) S.events.length = 2000;
   };
 
-  /* returns list of failed interlock texts for closing breaker `p` (tag prefix) */
+  /* interlocks the CP-8050 checks before closing a model breaker (also used by the black-start sequence) */
   S.closeInterlocks = function (p) {
     var f = [];
-    if (T[p + '.ES_EARTHED'] && on(p + '.ES_EARTHED')) f.push('Earth switch is in EARTHED position');
-    if (T[p + '.DS_CLOSED'] && !on(p + '.DS_CLOSED')) f.push('Three-position switch not in CLOSED (line) position');
-    if (T[p + '.CB_SPRING'] && !on(p + '.CB_SPRING')) f.push('Closing spring not charged');
-    if (T[p + '.LOCKOUT_86'] && on(p + '.LOCKOUT_86')) f.push('Lockout relay 86 operated - reset required');
-    if (T[p + '.SF6_LOLO'] && on(p + '.SF6_LOLO')) f.push('SF6 low-low pressure - operation blocked');
-    if (T[p + '.LR_REMOTE'] && !on(p + '.LR_REMOTE')) f.push('Local/Remote switch in LOCAL');
-    if (T[p + '.RLY_HEALTHY'] && !on(p + '.RLY_HEALTHY')) f.push('Protection relay not healthy');
-    if (T[p + '.TCS_FAIL'] && on(p + '.TCS_FAIL')) f.push('Trip circuit supervision failed');
-    if (on('PPC.CTRL.ESD')) f.push('Plant emergency shutdown active');
-    if (T[p + '.CB_RACKED'] && !on(p + '.CB_RACKED')) f.push('Breaker not racked-in');
-    if (p === 'GIS.AH3' && (on('BESS.SYS.ESD') || on('FIRE.FZ_BESS.FIRE'))) f.push('BESS ESD / fire alarm active');
-    if (p === 'GIS.AH2' && !S.sim.busLive) f.push('11kV bus dead - PV cannot energise bus (grid-following)');
-    if (/^DG\.DG\d_ACB$/.test(p)) {
-      var g = p.slice(3, 6);
-      if (!on('DG.' + g + '.RUNNING')) f.push('Generator not running');
-      else if (S.sim.busLive && !on('DG.' + g + '.SYNC') && S.sim.dg[g].status !== 'SYNC' && S.sim.dg[g].status !== 'ONLINE') f.push('Generator not synchronised to bus');
+    if (M[p + '.ES_EARTHED'] && on(p + '.ES_EARTHED')) f.push('Earth switch closed');
+    if (M[p + '.DS_CLOSED'] && !on(p + '.DS_CLOSED')) f.push('Disconnector not closed');
+    if (M[p + '.CB_SPRING'] && !on(p + '.CB_SPRING')) f.push('Closing spring not charged');
+    if (M[p + '.LOCKOUT_86'] && on(p + '.LOCKOUT_86')) f.push('Protection trip not reset at the relay');
+    if (M[p + '.SF6_LOLO'] && on(p + '.SF6_LOLO')) f.push('Gas pressure too low to operate');
+    if (M[p + '.RLY_HEALTHY'] && !on(p + '.RLY_HEALTHY')) f.push('Protection relay not healthy');
+    if ((p === 'GIS.AH1' || p === 'GIS.AH3') && !on('GIS.AH8.CB_CLOSED')) f.push('AH8 open: the 11 kV system would be unearthed');
+    if (p === 'GIS.AH3' && (on('BESS.SYS.ESD') || on('FIRE.FZ_BESS.FIRE'))) f.push('Battery emergency stop or fire active');
+    if (p === 'GIS.AH2' && !S.sim.busLive) f.push('11 kV busbar dead: PV cannot energise it');
+    if (on('PPC.CTRL.ESD')) f.push('Emergency stop active');
+    if (p === 'RMU.RMU_PRES_AH3' && on('RMU.RMU_PRES.QK11_EARTHED') || p === 'RMU.RMU_PM_AH3' && on('RMU.RMU_PM.QK11_EARTHED')) f.push('Transformer breaker earth switch closed');
+    return f;
+  };
+  S.closeIfAllowed = function (p) {
+    if (S.closeInterlocks(p).length) return false;
+    if (!on(p + '.CB_CLOSED')) { S.setCB(p, true); S.event('EMS', p.replace(/^GIS\./, '') + ' closed by the black-start sequence'); }
+    return true;
+  };
+
+  /* live list of reasons a command on a breaker would be refused */
+  S.breakerBlocks = function (br, action) {
+    var f = [], T = S.tags;
+    if (br.lr && T[br.lr] && !T[br.lr].v) f.push('Local/remote switch in LOCAL: remote commands are blocked');
+    if (br.clsd && T[br.clsd] && T[br.clsd].q !== 'GOOD') f.push('Position unknown: communication lost');
+    if (action === 'close') {
+      if (br.kind === 'switch') { if (br.es && T[br.es].v) f.push('Earth switch closed'); }
+      else if (br.model) f = f.concat(S.closeInterlocks(br.model));
     }
     return f;
   };
 
-  S.closeIfAllowed = function (p) {
-    if (S.closeInterlocks(p).length) return false;
-    if (!on(p + '.CB_CLOSED')) { S.setCB(p, true); S.event('PPC', p + ' closed by sequence'); }
-    return true;
+  function breakerCmd(tagId) {
+    for (var k in S.breakers) {
+      var br = S.breakers[k];
+      if (br.cmdOpen === tagId) return { br: br, action: 'open' };
+      if (br.cmdClose === tagId) return { br: br, action: 'close' };
+    }
+    return null;
+  }
+
+  var RANGE = {
+    'EMS-SOC-MIN-SP': [5, 30], 'EMS-SOC-MAX-SP': [80, 98], 'EMS-GEN-START-SP': [10, 50], 'EMS-GEN-STOP-SP': [50, 95], 'EMS-P-BESS-LIM-SP': [0, 950],
+    'NB01-P-LIM-SP': [0, 100], 'NB02-P-LIM-SP': [0, 100], 'NB03-P-LIM-SP': [0, 100], 'NB04-P-LIM-SP': [0, 100]
+  };
+  S.spRange = function (id) { return RANGE[id]; };
+
+  S.mayOperate = function (tagId) {
+    var t = S.tags[tagId];
+    return t && NEED[t.opby] !== undefined && S.user.level >= NEED[t.opby];
   };
 
-  /* minimum user level per action */
-  var LEVEL = { open: 2, close: 2, reset: 2, start: 2, stop: 2, setpoint: 3, mode: 3, esd: 2, silence: 2, blackstart: 3, inject: 3 };
-
-  S.command = function (p, action, val) {
-    var need = LEVEL[action] || 2;
-    if (S.user.level < need) return { ok: false, msg: 'Insufficient privileges - ' + (need === 3 ? 'ENGINEER' : 'OPERATOR') + ' level required' };
-    var res = { ok: true, msg: '' };
-    switch (action) {
-      case 'open':
-        S.setCB(p, false); res.msg = p + ' OPEN executed';
-        if (/^DG\.DG\d_ACB$/.test(p)) S.sim.dg[p.slice(3, 6)].request = false;
-        break;
-      case 'close':
-        var il = S.closeInterlocks(p);
-        if (il.length) return { ok: false, msg: 'Interlock: ' + il.join('; ') };
-        S.setCB(p, true); res.msg = p + ' CLOSE executed';
-        if (T[p + '.CB_TRIPPED']) T[p + '.CB_TRIPPED'].v = 0;
-        break;
-      case 'reset':
-        S.tagOrder.forEach(function (id) {
-          if (id.indexOf(p + '.') === 0 && /\.(PROT_\w+|LOCKOUT_86|CB_TRIPPED|FAIL_START|SHUTDOWN|FAULT)$/.test(id)) T[id].v = 0;
-        });
-        res.msg = p + ' protection / fault RESET';
-        break;
-      case 'start':
-        if (/^DG\.DG\d$/.test(p)) { S.sim.dg[p.slice(3)].request = true; if (T['PPC.CTRL.MODE'].v === 1) res.warn = 'PPC in AUTO may override manual DG start/stop'; }
-        else if (p === 'BESS.SYS') { T['BESS.PCS1.RUN'].v = 1; T['BESS.PCS2.RUN'].v = 1; }
-        else if (/^PV\.INV\d$/.test(p)) { S.config.pv.inverters.forEach(function (i) { if ('PV.' + i.id === p) i._stopped = false; }); }
-        res.msg = p + ' START command sent';
-        break;
-      case 'stop':
-        if (/^DG\.DG\d$/.test(p)) S.sim.dg[p.slice(3)].request = false;
-        else if (p === 'BESS.SYS') { T['BESS.PCS1.RUN'].v = 0; T['BESS.PCS2.RUN'].v = 0; }
-        else if (/^PV\.INV\d$/.test(p)) { S.config.pv.inverters.forEach(function (i) { if ('PV.' + i.id === p) i._stopped = true; }); }
-        res.msg = p + ' STOP command sent';
-        break;
-      case 'setpoint':
-        T[p].v = val; res.msg = p + ' set to ' + val;
-        break;
-      case 'esd': S.plantESD(); res.msg = 'Plant ESD'; break;
-      case 'blackstart':
-        T['PPC.CTRL.ESD'].v = 0;
-        if (!S.startBlackStart()) return { ok: false, msg: '11kV bus already energised - black-start not required (ESD reset if it was active)' };
-        res.msg = 'ESD reset, black-start initiated'; break;
-      case 'silence': T['FIRE.FACP.SOUNDERS'].v = 0; res.msg = 'Fire sounders silenced'; break;
-      default: return { ok: false, msg: 'Unknown action' };
+  S.command = function (tagId, val) {
+    var t = S.tags[tagId];
+    if (!t || (t.type !== 'DO' && t.type !== 'AO')) return { ok: false, msg: 'Not a command or setpoint tag' };
+    if (NEED[t.opby] === undefined) return { ok: false, msg: tagId + ' is operated automatically, not by users' };
+    if (S.user.level < NEED[t.opby]) return { ok: false, msg: t.opby + ' role required' };
+    var res = { ok: true, msg: tagId + ' executed' }, sim = S.sim;
+    var bc = breakerCmd(tagId);
+    if (bc) {
+      var blocks = S.breakerBlocks(bc.br, bc.action);
+      if (blocks.length) return { ok: false, msg: 'Blocked: ' + blocks.join('; ') };
+      if (bc.br.kind === 'switch') M[bc.br.model + '_CLOSED'].v = bc.action === 'close' ? 1 : 0;
+      else { S.setCB(bc.br.model, bc.action === 'close'); if (bc.action === 'close' && M[bc.br.model + '.CB_TRIPPED']) M[bc.br.model + '.CB_TRIPPED'].v = 0; }
+      res.msg = bc.br.title + ': ' + bc.action.toUpperCase() + ' (' + tagId + ')';
+    } else if (/^DG\d-(START|STOP)-CMD$/.test(tagId)) {
+      var g = tagId.slice(0, 3);
+      if (on('DG.' + g + '.MODE_AUTO')) return { ok: false, msg: g + ' is in automatic: the EMS starts and stops it. An Admin can switch it to manual.' };
+      sim.dg[g].manualRun = /START/.test(tagId);
+      res.msg = g + (sim.dg[g].manualRun ? ' START' : ' STOP') + ' in manual mode (' + tagId + ')';
+    } else if (/^DG\d-MODE-CMD$/.test(tagId)) {
+      var g2 = tagId.slice(0, 3), auto = !on('DG.' + g2 + '.MODE_AUTO');
+      M['DG.' + g2 + '.MODE_AUTO'].v = auto ? 1 : 0;
+      sim.dg[g2].manualRun = !auto && sim.dg[g2].status !== 'OFF';
+      res.msg = g2 + ' mode set to ' + (auto ? 'AUTOMATIC' : 'MANUAL') + ' (' + tagId + ')';
+    } else if (/^NB\d\d-START-STOP-CMD$/.test(tagId)) {
+      var inv = S.config.pv.inverters.filter(function (i) { return i.tag === tagId.slice(0, 4); })[0];
+      inv._stopped = !inv._stopped;
+      res.msg = inv.tag + (inv._stopped ? ' STOP' : ' START') + ' (' + tagId + ')';
+    } else if (tagId === 'EMS-MODE-CMD') {
+      M['PPC.CTRL.MODE'].v = M['PPC.CTRL.MODE'].v ? 0 : 1;
+      res.msg = 'EMS operating mode set to ' + (M['PPC.CTRL.MODE'].v ? 'AUTOMATIC' : 'MANUAL');
+    } else if (tagId === 'EMS-CRATE-CMD') {
+      sim.crateLimit = !sim.crateLimit;
+      res.msg = 'Battery C-rate limit ' + (sim.crateLimit ? 'ENABLED' : 'DISABLED for calibration');
+    } else if (tagId === 'EMS-RESET-L3-CMD') {
+      M['BESS.SYS.BMS_WARN'].v = 0;
+      res.msg = 'EMS level 3 faults reset';
+    } else if (tagId === 'EMS-RESET-L12-CMD') {
+      ['BESS.SYS.BMS_FAULT', 'BESS.HVAC.FAULT'].forEach(function (id) { M[id].v = 0; });
+      for (var r = 1; r <= S.config.bess.racks; r++) M['BESS.RACK' + r + '.FAULT'].v = 0;
+      res.msg = 'EMS level 1 and 2 faults reset';
+    } else if (t.type === 'AO') {
+      var rg = RANGE[tagId];
+      if (typeof val !== 'number' || !isFinite(val)) return { ok: false, msg: 'Enter a number' };
+      if (rg && (val < rg[0] || val > rg[1])) return { ok: false, msg: 'Out of range ' + rg[0] + ' to ' + rg[1] + ' ' + t.unit };
+      if (tagId === 'EMS-SOC-MIN-SP') sim.socMin = val;
+      else if (tagId === 'EMS-SOC-MAX-SP') M['PPC.CTRL.SP_SOC_HIGH'].v = val;
+      else if (tagId === 'EMS-GEN-START-SP') M['PPC.CTRL.SP_SOC_DG_START'].v = val;
+      else if (tagId === 'EMS-GEN-STOP-SP') M['PPC.CTRL.SP_SOC_DG_STOP'].v = val;
+      else if (tagId === 'EMS-P-BESS-LIM-SP') sim.bessLimit = val;
+      else if (/^NB\d\d-P-LIM-SP$/.test(tagId)) M['PV.INV' + Number(tagId.slice(2, 4)) + '.SP_PLIM'].v = val;
+      t.v = val;
+      res.msg = t.desc + ' (' + tagId + ') set to ' + val + ' ' + t.unit;
+    } else {
+      return { ok: false, msg: 'No handler for ' + tagId };
     }
-    S.event('CMD', res.msg, 3);
+    S.event('CMD', res.msg, 0);
     return res;
   };
 })(SCADA);

@@ -1,7 +1,8 @@
 /*
- * Tag database / I/O list generator.
- * Every signal displayed, alarmed, trended or controlled by the HMI is a tag
- * created here, so the exported I/O list always matches the screens.
+ * Simulator plant model (internal points, not the submitted I/O list).
+ * The plant simulator reads and writes these model points; bind.js maps them
+ * onto the submitted tags in iolist.js, which are the only tags the screens,
+ * alarms, trends and I/O list use.
  *
  * Tag id format: <AREA>.<EQUIPMENT>.<SIGNAL>
  * type: AI analogue input, DI digital input, AO analogue output (setpoint), DO digital output (command)
@@ -428,31 +429,8 @@
   T('PPC', 'CTRL', 'CMD_BLACKSTART', 'DO', 'Initiate black-start sequence', { dev: pd, proto: pp, ctrl: 'start' });
   T('PPC', 'CTRL', 'CMD_ESD', 'DO', 'Plant emergency shutdown', { dev: pd, proto: pp, ctrl: 'esd' });
 
-  S.tags = tags;
-  S.tagOrder = order;
-  S.tag = function (id) { return tags[id]; };
-  S.val = function (id) { var t = tags[id]; return t ? t.v : undefined; };
+  S.mtags = tags;
+  S.mtagOrder = order;
+  S.mval = function (id) { var t = tags[id]; return t ? t.v : undefined; };
 
-  S.areaNames = {
-    GIS: '11kV GIS Combiner Panel', TX: 'Transformers', RMU: 'Remote RMUs (President / P.M.)',
-    LV: 'LV Distribution Boards', DG: 'Diesel Generators', PV: 'PV Plant / Inverters', MET: 'Weather Station',
-    BESS: 'Battery Energy Storage', FIRE: 'Fire Detection & Suppression', AUX: 'UPS & Auxiliary Power',
-    NET: 'Communications & Cybersecurity', PPC: 'Power Plant Controller'
-  };
-
-  S.ioListCsv = function () {
-    var head = ['Tag', 'Area', 'Equipment', 'Signal', 'Type', 'Description', 'Unit', 'Range', 'Source device', 'Protocol', 'Address / LN', 'Alarm', 'Priority', 'LoLo', 'Lo', 'Hi', 'HiHi'];
-    var rows = [head];
-    order.forEach(function (id) {
-      var t = tags[id], al = '', pri = '';
-      if (t.alarm) { al = 'On state = ' + t.alarm.on; pri = t.alarm.pri; }
-      else if (t.lim) { al = 'Limits'; pri = '1/2'; }
-      var l = t.lim || {};
-      rows.push([t.id, S.areaNames[t.area] || t.area, t.equip, t.sig, t.type, t.desc, t.unit, t.range, t.dev, t.proto, t.addr, al, pri,
-        l.lolo !== undefined ? l.lolo : '', l.lo !== undefined ? l.lo : '', l.hi !== undefined ? l.hi : '', l.hihi !== undefined ? l.hihi : '']);
-    });
-    return rows.map(function (r) {
-      return r.map(function (c) { c = String(c); return /[",\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(',');
-    }).join('\n');
-  };
 })(SCADA);
