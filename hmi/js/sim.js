@@ -136,7 +136,12 @@
     { txt: 'Close AH8 NECR feeder - establish 11kV neutral earthing', fn: function () { return S.closeIfAllowed('GIS.AH8'); } },
     { txt: 'Start grid-forming source (BESS PCS, else lead DG)', fn: function () {
       if (bessAvailable()) { setCB('BESS.LV_ACB', true); set('BESS.SYS.CMD_MODE', 1); set('BESS.PCS1.RUN', 1); set('BESS.PCS2.RUN', 1); return S.closeIfAllowed('GIS.AH3'); }
-      S.closeIfAllowed('GIS.AH1'); sim.dg.DG1.request = true; return sim.dg.DG1.status === 'ONLINE' || sim.dg.DG2.status === 'ONLINE';
+      // on generators: start every available set before the office feeders close, since one set cannot carry both offices at peak
+      S.closeIfAllowed('GIS.AH1');
+      var gens = C.generators.filter(function (g) { return on('DG.' + g.id + '.READY') && on('DG.' + g.id + '.MODE_AUTO'); });
+      gens.forEach(function (g) { sim.dg[g.id].request = true; });
+      var online = C.generators.filter(function (g) { return sim.dg[g.id].status === 'ONLINE'; }).length;
+      return online > 0 && online >= gens.length;
     } },
     { txt: 'Soft-energise 11kV busbar - check U = 11kV ±5 %, f = 50Hz ±0.5 %', fn: function () { return sim.busLive; } },
     { txt: 'Close AH5 SAT feeder - restore plant auxiliaries', fn: function () { return S.closeIfAllowed('GIS.AH5'); } },
@@ -245,8 +250,11 @@
       var lead = on('DG.DG1.READY') ? 'DG1' : 'DG2', lag2 = lead === 'DG1' ? 'DG2' : 'DG1';
       if (!bessForming) {
         // BESS unavailable: DGs form the grid
+        // second generator when the load on the running one exceeds 80 % of its rating (design report section 11); stop below 50 %
         sim.dg[lead].request = true;
-        sim.dg[lag2].request = need - pvAvail * 0.5 > C.generators[0].kw * 0.85 || !on('DG.' + lead + '.READY');
+        var leadKw0 = C.generators.filter(function (g) { return g.id === lead; })[0].kw, resid = need - pvAvail;
+        if (resid > 0.8 * leadKw0 || !on('DG.' + lead + '.READY')) sim.dg[lag2].request = true;
+        else if (resid < 0.5 * leadKw0 && sim.dg[lag2].runFor > 600) sim.dg[lag2].request = false;
       } else {
         // EMS sequence (design report section 11): start below the start SOC when PV cannot cover the load,
         // second generator when load exceeds 80 % of the running one, stop at the stop SOC or when PV covers the load

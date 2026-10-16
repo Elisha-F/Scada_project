@@ -236,5 +236,31 @@ for k, name in ((0, 'fig1_architecture.png'), (2, 'fig3_network.png')):
     w, h = Image.open(path).size
     shape.height = int(shape.width * h / w)
 
+# ---- Rev 1: HMI screen mock-ups in section 12 and as Attachment E (tools/capture_screens.js, tools/build_attachment_e.js)
+from docx.shared import Emu
+SCR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docs', 'Attachment_E_Screens')
+par('Screens will be submitted as mock-ups for approval before configuration.',
+    'Mock-ups of the main screens are shown below and the full set is in Attachment E. They are submitted for approval of layout and content; the final screens are built in SICAM SCC to the same layout before the factory test.')
+add_row(23, ['I/O list', 'Every signal with its tag, I/O row, module and channel or protocol source, alarm level and live value', 'Filter, export'])
+caption_src = find('SCADA architecture · ')
+anchor = T[23]._tbl
+for name, text in (('E01_plant_overview.png', 'Plant overview · mock-up of the opening screen, a live single-line diagram of the whole plant'),
+                   ('E02_11kV_switchboard.png', '11 kV switchboard · mock-up, panels AH1 to AH8 with positions, relay status and measurements'),
+                   ('E07_energy_management.png', 'Energy management · mock-up, EMS state, power balance, operating modes and Admin settings')):
+    fp = d.add_paragraph()
+    fp.add_run().add_picture(os.path.join(SCR, name), width=Emu(5486400))
+    anchor.addnext(fp._p)
+    cap = deepcopy(caption_src._p)
+    fp._p.addnext(cap)
+    cp = docx.text.paragraph.Paragraph(cap, caption_src._parent)
+    for r in cp.runs[1:]:
+        r._r.getparent().remove(r._r)
+    cp.runs[0].text = text
+    anchor = cap
+add_row(28, ['E', 'HMI screen mock-ups: 12 screens from the HMI demonstration, including a battery fire (Villa_Somalia_SCADA_Attachment_E_HMI_Screens.pdf)', 'Rev 1, complete; final screens built in SICAM SCC'])
+cell(1, 1, 2, 'attachments A to D', 'attachments A to E')
+cell(1, 2, 2, 'One controller and one SCADA covering every equipment group', 'A redundant controller pair and one SCADA covering every equipment group, with screen mock-ups')
+cell(1, 2, 3, '3, 4, 5, 6, 12', '3, 4, 5, 6, 12, Attachment E')
+
 d.save(OUT)
 print('saved', OUT)

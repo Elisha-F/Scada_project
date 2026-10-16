@@ -39,7 +39,9 @@ emergency stop, generator fail-to-start, inverter faults, PM fibre cut…).
 * `docs/Villa_Somalia_SCADA_Device_and_IO_List_Rev1.xlsx` – device and I/O list Rev 1: 244 hardwired points with I/O row, module and channel; 463 communication points on the *Comms Point List* sheet (built from rev 0 with `tools/harmonize_io_list.py`).
 * `docs/source/` – Blueflag's rev 0 originals, unchanged.
 * `docs/SCADA_Design_Basis.md` – drawing analysis, client comments traceability, drawing-review findings.
-* `docs/Annex_B_Screens/` – HMI screen captures.
+* `docs/Villa_Somalia_SCADA_Attachment_E_HMI_Screens.pdf` – Attachment E, the HMI screen mock-ups (12 screens). Captures in `docs/Attachment_E_Screens/`;
+  rebuild with `node tools/capture_screens.js && node tools/build_attachment_e.js`, then `tools/revise_report.py` to refresh the three screens in section 12.
+* `docs/figures/` – report figures 1 and 3 for the redundant controller pair (`tools/draw_report_figures.py`).
 
 ## Structure
 
