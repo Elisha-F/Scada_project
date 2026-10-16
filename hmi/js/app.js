@@ -48,6 +48,14 @@
       S.alarms['COMM-STALE'] = { id: 'COMM-STALE', tIn: now, acked: false, active: true, level: 2, txt: 'Communication lost: ' + stale.length + ' signals stale', equip: 'Communication', val: '' };
       S.event('ALM', 'Communication lost: ' + stale.length + ' signals stale (level 2)', 2);
     } else if (!stale.length && a2 && a2.active) { a2.active = false; a2.tOut = now; if (a2.acked) delete S.alarms['COMM-STALE']; }
+    // EMS heartbeat supervision (design report section 11): level 1 alarm when it stops changing for 3 scans
+    var hb = T['EMS-HEARTBEAT'].v;
+    S._hbMiss = hb === S._hbLast ? (S._hbMiss || 0) + 1 : 0; S._hbLast = hb;
+    var a3 = S.alarms['EMS-HEARTBEAT'];
+    if (S._hbMiss >= 3 && !(a3 && a3.active)) {
+      S.alarms['EMS-HEARTBEAT'] = { id: 'EMS-HEARTBEAT', tIn: now, acked: false, active: true, level: 1, txt: 'EMS heartbeat lost: generators take over on dead busbar', equip: 'Embedded EMS', val: String(hb) };
+      S.event('ALM', 'EMS heartbeat lost (level 1)', 1);
+    } else if (S._hbMiss === 0 && a3 && a3.active) { a3.active = false; a3.tOut = now; if (a3.acked) delete S.alarms['EMS-HEARTBEAT']; }
   }
   S.alarmList = function () {
     return Object.keys(S.alarms).map(function (k) { return S.alarms[k]; })

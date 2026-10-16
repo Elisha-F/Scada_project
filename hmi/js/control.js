@@ -85,7 +85,7 @@
       var blocks = S.breakerBlocks(bc.br, bc.action);
       if (blocks.length) return { ok: false, msg: 'Blocked: ' + blocks.join('; ') };
       if (bc.br.kind === 'switch') M[bc.br.model + '_CLOSED'].v = bc.action === 'close' ? 1 : 0;
-      else { S.setCB(bc.br.model, bc.action === 'close'); if (bc.action === 'close' && M[bc.br.model + '.CB_TRIPPED']) M[bc.br.model + '.CB_TRIPPED'].v = 0; }
+      else { S.setCB(bc.br.model, bc.action === 'close'); if (bc.action === 'close' && M[bc.br.model + '.CB_TRIPPED']) M[bc.br.model + '.CB_TRIPPED'].v = 0; if (bc.action === 'close') delete S.sim.uf[bc.br.model.replace(/^GIS\./, '')]; }
       res.msg = bc.br.title + ': ' + bc.action.toUpperCase() + ' (' + tagId + ')';
     } else if (/^DG\d-(START|STOP)-CMD$/.test(tagId)) {
       var g = tagId.slice(0, 3);

@@ -27,7 +27,7 @@
   var sim = S.sim = {
     t: Date.now(), speed: 1, running: true, bessLimit: 950, socMin: 10, crateLimit: true, heartbeat: 0,
     state: 2, stateSince: 0, seq: null, seqStep: 0, seqTimer: 0,
-    dg: {}, faults: {}, cloud: 1, cloudTarget: 1,
+    dg: {}, faults: {}, uf: {}, ufTimer: 0, cloud: 1, cloudTarget: 1,
     stateNames: ['BLACKOUT', 'BLACK-START', 'PV + BESS (normal)', 'DG ASSIST - starting', 'PV + BESS + DG', 'DG stopping / cool-down', 'DG ONLY (BESS unavailable)', 'EMERGENCY SHUTDOWN', 'MANUAL'],
     history: { t: [], v: {} }, histIds: []
   };
@@ -152,7 +152,7 @@
       C.gis.panels.some(function (p) { return on('GIS.' + p.id + '.LOCKOUT_86') && p.kind !== 'feeder' && p.kind !== 'spare'; });
   }
   function bessAvailable() {
-    return !on('BESS.SYS.BMS_FAULT') && !on('BESS.SYS.ESD') && !on('FIRE.FZ_BESS.FIRE') && !on('FIRE.FZ_BESS.PRE_ALM') && get('BESS.SYS.SOC') > sim.socMin &&
+    return !on('BESS.SYS.BMS_FAULT') && !on('BESS.SYS.ESD') && !on('FIRE.FZ_BESS.FIRE') && !on('FIRE.FZ_BESS.PRE_ALM') && get('BESS.SYS.SOC') > sim.socMin && !sim.faults.EMS_FAIL &&
       !on('BESS.PCS1.FAULT') && !on('GIS.AH3.LOCKOUT_86');
   }
 
@@ -212,10 +212,11 @@
 
     /* ---- loads ---- */
     var op = officeProfile(h);
-    var shed = on('PPC.CTRL.LOAD_SHED') ? 0.8 : 1;
+    var shed = 1; // load is shed by under-frequency trips of whole feeders, see below
     var Lpres = presOn ? (135 + 225 * op + 18 * Math.sin(sim.t / 7e5) + noise(4)) * shed : 0;
     var Lpm = pmOn ? (105 + 185 * op + 15 * Math.sin(sim.t / 5e5 + 1) + noise(4)) * shed : 0;
     var Laux = auxOn ? 22 + 10 * (Tamb - 23) / 9 + (on('BESS.HVAC.RUN') ? 6 : 0) + noise(0.6) : 0;
+    if (sim.faults.OVERLOAD) { if (presOn) Lpres += 200; if (pmOn) Lpm += 200; }
     var Lload = Lpres + Lpm + Laux;
 
     /* ---- PV available ---- */
@@ -268,7 +269,8 @@
         set('BESS.SYS.CMD_MODE', 1); set('BESS.PCS1.RUN', 1); set('BESS.PCS2.RUN', 1); setCB('BESS.LV_ACB', true); setCB('GIS.AH3', true);
         S.event && S.event('PPC', 'BESS available - PCS synchronised to bus, AH3 closed, BESS resumes grid-forming');
       }
-      if (st === 0 && !sim.seq && !anyBlockingFault()) { sim.blackoutTimer = (sim.blackoutTimer || 0) + dt; if (sim.blackoutTimer > 10) { sim.blackoutTimer = 0; S.startBlackStart(); } }
+      // with the EMS failed there is no black-start sequence: the generator controllers start on the dead busbar by themselves
+      if (st === 0 && !sim.seq && !anyBlockingFault() && !sim.faults.EMS_FAIL) { sim.blackoutTimer = (sim.blackoutTimer || 0) + dt; if (sim.blackoutTimer > 10) { sim.blackoutTimer = 0; S.startBlackStart(); } }
     } else if (on('PPC.CTRL.ESD')) sim.state = 7;
     else if (!auto && !sim.seq) sim.state = busLive ? 8 : 0;
 
@@ -285,7 +287,7 @@
 
     /* DG dispatch */
     var dgCap = dgOnline.reduce(function (a, g) { return a + g.kw; }, 0);
-    var Pdg = 0, Ppv = pvAvail, Pbess = 0, curtail = 0;
+    var Pdg = 0, Ppv = pvAvail, Pbess = 0, curtail = 0, ovl = false;
     if (bessForming) {
       if (dgOnline.length) {
         var chgTarget = Math.min(chgMax, 700);
@@ -293,18 +295,30 @@
       }
       Pbess = need - Ppv - Pdg;
       if (Pbess < -chgMax) { curtail = -chgMax - Pbess; Ppv -= curtail; Pbess = -chgMax; }
-      if (Pbess > disMax) { set('PPC.CTRL.LOAD_SHED', 1); Pbess = disMax; } else if (Pbess < disMax * 0.7) set('PPC.CTRL.LOAD_SHED', 0);
+      if (Pbess > disMax) { ovl = true; set('PPC.CTRL.LOAD_SHED', 1); Pbess = disMax; } else if (Pbess < disMax * 0.7) set('PPC.CTRL.LOAD_SHED', 0);
     } else if (dgOnline.length) {
       Pdg = need - Ppv;
       if (Pdg < dgCap * ppc.dgMin) { curtail = dgCap * ppc.dgMin - Pdg; Ppv -= curtail; Pdg = dgCap * ppc.dgMin; }
-      if (Pdg > dgCap) { set('PPC.CTRL.LOAD_SHED', 1); Pdg = dgCap; } else if (Pdg < dgCap * 0.75) set('PPC.CTRL.LOAD_SHED', 0);
+      if (Pdg > dgCap) { ovl = true; set('PPC.CTRL.LOAD_SHED', 1); Pdg = dgCap; } else if (Pdg < dgCap * 0.75) set('PPC.CTRL.LOAD_SHED', 0);
     } else { Ppv = 0; Pbess = 0; set('PPC.CTRL.LOAD_SHED', 0); }
     Ppv = Math.max(0, Ppv);
+
+    /* under-frequency load shedding by the 11 kV relays (81), design report section 11:
+       AH6 (Prime Minister) at 48.5 Hz after 1 s, then AH4 (President) at 47.5 Hz after 0.5 s; AH5 is never shed */
+    var overload = busLive && ovl;
+    var ufStage = on('GIS.AH6.CB_CLOSED') ? 'AH6' : on('GIS.AH4.CB_CLOSED') ? 'AH4' : null;
+    if (overload && ufStage) {
+      sim.ufTimer += dt;
+      if (sim.ufTimer >= (ufStage === 'AH6' ? 1 : 0.5)) {
+        setCB('GIS.' + ufStage, false); set('GIS.' + ufStage + '.CB_TRIPPED', 1); sim.uf[ufStage] = true; sim.ufTimer = 0;
+        S.event && S.event('PROT', ufStage + (ufStage === 'AH6' ? ' Prime Minister' : ' President') + ' feeder shed by under-frequency protection (81)', 1);
+      }
+    } else sim.ufTimer = 0;
 
     /* ---- write PV ---- */
     var pvScale = pvAvail > 0 ? Ppv / pvAvail : 0;
     var U = busLive ? 11 + noise(0.02) - 0.08 * (Lload / 1200) : 0;
-    var f = busLive ? (bessForming ? 50 - 0.15 * Pbess / 950 : 50 - 0.3 * (Pdg / Math.max(dgCap, 1) - 0.5)) + noise(0.008) : 0;
+    var f = overload ? (on('GIS.AH6.CB_CLOSED') ? 48.3 : 47.3) + noise(0.02) : busLive ? (bessForming ? 50 - 0.15 * Pbess / 950 : 50 - 0.3 * (Pdg / Math.max(dgCap, 1) - 0.5)) + noise(0.008) : 0;
     set('GIS.BUS.U', U); set('GIS.BUS.F', f); set('GIS.BUS.LIVE', busLive ? 1 : 0);
 
     C.pv.inverters.forEach(function (inv, idx) {
@@ -550,6 +564,12 @@
         S.event('SIM', 'Protection relays reset locally at the panels'); break;
       case 'MCCB_NB03': set('PV.INV3.MCCB_ON', 0); set('PV.INV3.MCCB_TRIP', 1); S.event('SIM', 'Inverter NB03 AC MCCB tripped', 2); break;
       case 'DG_MAN': C.generators.forEach(function (g) { set('DG.' + g.id + '.MODE_AUTO', 0); }); break;
+      case 'EMS_FAIL':
+        sim.faults.EMS_FAIL = !sim.faults.EMS_FAIL;
+        if (sim.faults.EMS_FAIL) { set('BESS.PCS1.RUN', 0); set('BESS.PCS2.RUN', 0); S.event('SIM', 'EMS stopped: battery off, heartbeat lost', 1); }
+        else { S.event('SIM', 'EMS restored'); }
+        break;
+      case 'OVERLOAD': sim.faults.OVERLOAD = !sim.faults.OVERLOAD; S.event('SIM', 'Office load step +400 kW ' + (sim.faults.OVERLOAD ? 'ON' : 'OFF')); break;
       case 'COMM_PM': sim.faults.COMM_PM = !sim.faults.COMM_PM; S.event('NET', 'Fibre link to P.M. RMU ' + (sim.faults.COMM_PM ? 'LOST' : 'restored'), 2); break;
       case 'CLEAR':
         sim.faults = {};

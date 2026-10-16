@@ -113,6 +113,18 @@ The battery EMS dispatches the plant; the CP-8050 and SCADA monitor it and pass 
 7. **Faults:** level 3 faults are reset by an Operator through the EMS; level 1 and 2 faults by an Admin. Protection trips are reset at the relay; a remote close stays blocked until then.
 8. **Neutral earthing:** AH8 is the only earthing of the 11 kV system. Closing AH1 (generators) or AH3 (battery) is blocked while AH8 is open; in black start AH8 is closed first.
 
+
+### Requirements on the EMS and fallback (design report section 11)
+
+With no separate plant controller, the EMS supplier must provide, and the commissioning tests must show:
+
+* **Generator start and stop:** by a hardwired start contact from the EMS to each generator controller (Modbus as a duplicate), independent of the CP-8050, SCADA and network.
+* **PV curtailment:** EMS limits the inverters through the PLC box when the battery is full or a generator would fall below minimum load, ramping down rather than tripping; response time stated by the supplier.
+* **Black start:** written sequence (AH8 first), each step marked automatic or by operator command.
+* **EMS failure:** the CP-8050 raises a level 1 alarm when the EMS heartbeat stops; the generator controllers start on a dead busbar by themselves and form the grid; the battery stays off until the EMS is restored.
+* **Load shedding:** under-frequency (81) in the 11 kV relays: AH6 at 48.5 Hz / 1 s, then AH4 at 47.5 Hz / 0.5 s (to be confirmed by the protection study); AH5 never shed; feeders reclosed by the Operator.
+
+The simulator demonstrates the last two (SYSTEM → Simulation: *EMS stops*, *Office load step*). Open points 16–18 in the design report ask the EMS supplier, generator supplier and protection engineer to confirm them.
 ---
 
 ## 6. Data-sheet register

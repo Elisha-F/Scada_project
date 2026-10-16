@@ -132,5 +132,55 @@ add_row(27, ['14', 'Voltage transformers on the 11 kV panels or busbar. None are
              'Switchgear supplier and electrical designer', 'Sections 5, 7; relay communication points'])
 add_row(27, ['15', 'Whether the EMS exposes the battery combiner panel status', 'PV and BESS supplier', 'Battery communication points'])
 
+# ---- Rev 1: requirements on the EMS and fallback (generator path, PV curtailment, black start, EMS failure, load shedding)
+def clone_after(src, anchor, lead, text=None):
+    """Copy paragraph src (style, numbering, run format) after anchor, with a bold lead-in and plain text."""
+    el = deepcopy(src._p)
+    anchor._p.addnext(el)
+    np = docx.text.paragraph.Paragraph(el, anchor._parent)
+    runs = np.runs
+    for r in runs[2 if text is not None else 1:]:
+        r._r.getparent().remove(r._r)
+    runs[0].text = lead
+    if text is not None:
+        runs[1].text = ' ' + text
+    return np
+
+
+def find(prefix):
+    ps = [p for p in d.paragraphs if p.text.startswith(prefix)]
+    assert len(ps) == 1, (prefix, len(ps))
+    return ps[0]
+
+
+H3, NORMAL, BULLET = find('Black start'), find('The SCADA shows each step and raises'), find('Audit log.')
+p = par('The EMS supplier must confirm which of these steps it carries out automatically and which need an operator command from the SCADA.',
+        'The EMS supplier provides this sequence in its functional description, states which steps it carries out automatically and which need an operator command from the SCADA, and demonstrates it at commissioning.')
+a = clone_after(H3, p, 'Requirements on the EMS and fallback')
+a = clone_after(NORMAL, a, 'The design relies on the embedded EMS for dispatch, with no separate plant controller. The EMS supplier must therefore provide the functions below, and the plant must keep supplying the offices if the EMS fails. They are part of the EMS specification and are tested at commissioning.')
+for lead, text in (
+    ('Generator start and stop.', 'The EMS starts and stops each generator through a hardwired start contact to the generator controller, so the start does not depend on the CP-8050, the SCADA or the network. A Modbus command may duplicate it. The EMS applies the start below 20% and stop at 80% state of charge, the second-generator rule at 80% of the running generator, the 30% minimum load and lead and lag alternation.'),
+    ('PV curtailment.', 'The EMS limits the inverters through the PLC box when the battery is full, or when a generator would fall below its minimum load. Output is ramped down rather than tripped. The supplier states the response time from the EMS to the inverters.'),
+    ('Black start.', 'The EMS supplier provides the black-start sequence above in writing, including AH8 being closed first, and marks each step as automatic or by operator command.'),
+    ('EMS failure.', 'The CP-8050 monitors the EMS heartbeat and raises a level 1 alarm when it stops. Each generator controller is set to start on its own on a dead busbar, or when the EMS start contact is lost, and to form the grid alone. The offices are then resupplied from the generators without the EMS, and the battery stays off until the EMS is restored.'),
+    ('Load shedding.', 'If a generator is overloaded and frequency falls, the 11 kV relays shed load by under-frequency protection (81): AH6, the Prime Minister feeder, first, and AH4, the President feeder, last. Proposed settings are 48.5 Hz for 1 s on AH6 and 47.5 Hz for 0.5 s on AH4, to be confirmed by the protection study. The auxiliary feeder AH5 is not shed. Feeders are reclosed by operator command once frequency is stable.'),
+):
+    a = clone_after(BULLET, a, lead, text)
+
+# division of duties, control authority, fault responses, recovery
+cell(9, 5, 1, 'EMS and generator controllers', 'EMS, by hardwired start contact to the generator controllers')
+add_row(6, ['Generator start if the EMS fails', 'Generator controllers, on dead busbar', 'Continues'])
+add_row(6, ['Load shedding on under-frequency', 'Relays AH6 and AH4', 'Continues'])
+add_row(9, ['Load shedding on under-frequency', 'Relays AH6, then AH4', 'Protection engineer, locally', 'Monitor trips; reclose feeders'])
+add_row(22, ['EMS failure or EMS heartbeat lost', 'Level 1 alarm; generators start on dead busbar and supply the plant; battery off', 'Call the PV and BESS supplier; check generator loading'])
+add_row(22, ['Generator overload, frequency falling', 'Relays shed AH6, then AH4, by under-frequency protection', 'Reduce load; reclose the feeders from the SCADA when frequency is stable'])
+par('A written procedure covers local operation of breakers and generators if the controller or SCADA fails.',
+    'A written procedure covers local operation of breakers and generators if the controller or SCADA fails. If the EMS fails, the generators start on their own and supply the plant (section 11).')
+
+# open points
+add_row(27, ['16', 'EMS functional description: generator start contact and Modbus commands, PV curtailment path and response time, black-start steps marked automatic or by operator, behaviour on loss of the CP-8050 link', 'PV and BESS supplier', 'Section 11; EMS communication points'])
+add_row(27, ['17', 'Generator controller start input for the EMS contact; dead-bus automatic start and island operation without the EMS', 'Generator supplier', 'Section 11; generator settings'])
+add_row(27, ['18', 'Under-frequency load-shedding settings and shedding order (AH6 first, AH4 last)', 'Client and protection engineer', 'Section 11; relay settings'])
+
 d.save(OUT)
 print('saved', OUT)

@@ -369,7 +369,7 @@
     ['AH4_OC', 'AH4 President feeder: overcurrent trip'], ['AH6_EF', 'AH6 PM feeder: earth fault trip'], ['RELAY_RESET', 'Reset relays locally at the panels'],
     ['BESS_FAULT', 'Battery fault (level 1)'], ['FIRE_PRE', 'Battery container: fire pre-alarm'], ['FIRE_CONF', 'Battery container: fire confirmed'],
     ['ESTOP', 'Press emergency stop in the switchroom'], ['ESTOP_RESET', 'Reset the emergency stop locally'], ['DG1_FAILSTART', 'DG1 fails to start next time'], ['DG_MAN', 'Set both generators to manual at the controller'],
-    ['INV3_FAULT', 'NB03 insulation fault'], ['MCCB_NB03', 'NB03 AC breaker trips'], ['CLOUD', 'Heavy cloud on / off'], ['SF6_AH6', 'AH6 gas pressure low'],
+    ['EMS_FAIL', 'EMS stops / restarts (generators take over)'], ['OVERLOAD', 'Office load step +400 kW on / off'], ['INV3_FAULT', 'NB03 insulation fault'], ['MCCB_NB03', 'NB03 AC breaker trips'], ['CLOUD', 'Heavy cloud on / off'], ['SF6_AH6', 'AH6 gas pressure low'],
     ['COMM_PM', 'Cut / restore the fibre to the PM station'], ['CLEAR', 'Clear all simulated faults']
   ];
   S.screens.sim = {

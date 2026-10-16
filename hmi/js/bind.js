@@ -61,7 +61,7 @@
     A(k + '-TRIP-50', function () { return m(g + '.PROT_50'); });
     A(k + '-TRIP-50N', function () { return m(g + '.PROT_50N'); });
     A(k + '-TRIP-27-59', function () { return b(M[g + '.PROT_27'] && (on(g + '.PROT_27') || on(g + '.PROT_59'))); });
-    A(k + '-TRIP-81', function () { return b(M[g + '.PROT_81'] && on(g + '.PROT_81')); });
+    A(k + '-TRIP-81', function () { return b(M[g + '.PROT_81'] && on(g + '.PROT_81') || S.sim.uf[k]); });
     A(k + '-RLY-HEALTHY', function () { return m(g + '.RLY_HEALTHY'); });
     A(k + '-DREC', function () { return b(on(g + '.PROT_50') || on(g + '.PROT_50N') || on(g + '.LOCKOUT_86')); });
     A(k + '-TCS-ALM', function () { return m(g + '.TCS_FAIL'); });
@@ -348,15 +348,19 @@
 
   /* PM-station tags go stale when its fibre link is cut (I/O row 4 and the station switch) */
   var pmTags = S.tagOrder.filter(function (id) { return /^PMS-/.test(id); });
+  /* EMS and battery values read through the EMS go stale when the EMS stops (the heartbeat keeps its last value) */
+  var emsTags = S.tagOrder.filter(function (id) { return /^(EMS-|BESS-)/.test(id) && T[id].src === 'COM' && T[id].type !== 'DO' && T[id].type !== 'AO' && id !== 'EMS-HEARTBEAT'; });
 
   S.bindScan = function () {
-    S.sim.heartbeat = (S.sim.heartbeat + 1) % 65536;
+    if (!S.sim.faults.EMS_FAIL) S.sim.heartbeat = (S.sim.heartbeat + 1) % 65536;
     for (var i = 0; i < binds.length; i++) {
       var x = binds[i], v = x.fn();
       x.t.v = typeof v === 'boolean' ? (v ? 1 : 0) : v;
     }
     var q = pmLink() ? 'GOOD' : 'BAD';
     pmTags.forEach(function (id) { T[id].q = q; });
+    var qe = S.sim.faults.EMS_FAIL ? 'BAD' : 'GOOD';
+    emsTags.forEach(function (id) { T[id].q = qe; });
   };
 
   /* history of every analogue tag, for trends */

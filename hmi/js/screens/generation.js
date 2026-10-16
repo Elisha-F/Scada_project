@@ -113,7 +113,7 @@
           '<div class="btnrow">' + ui.btn('RESET LEVEL 3 FAULTS', 'EMS-RESET-L3-CMD', 'b-gray') + ui.btn('RESET LEVEL 1 AND 2 FAULTS', 'EMS-RESET-L12-CMD', 'b-gray') + '</div>') +
         ui.card('Settings (Admin)', sp.map(function (x) {
           return '<div class="kv"><span class="k">' + x[1] + '</span><span><span class="v" data-tag="' + x[0] + '"></span> ' + ui.btn('✎', x[0], 'b-small b-blue') + '</span></div>';
-        }).join('') + '<p class="note">Proposed starting values, to be set with the EMS supplier at commissioning. Only the CP-8050 writes settings to the EMS.</p>') +
+        }).join('') + '<p class="note">Proposed starting values, to be set with the EMS supplier at commissioning. Only the CP-8050 writes settings to the EMS.</p><h4>If the EMS fails</h4><p class="note">The CP-8050 raises a level 1 alarm when the EMS heartbeat stops. The generators start on the dead busbar by themselves and supply the plant; the battery stays off. EMS heartbeat: <b data-tag="EMS-HEARTBEAT"></b></p><h4>Load shedding</h4><p class="note">On overload the 11 kV relays shed by under-frequency (81): AH6 at 48.5 Hz after 1 s, then AH4 at 47.5 Hz after 0.5 s. AH5 is never shed. The Operator recloses once frequency is stable.</p>') +
         '</div><div style="height:12px"></div>' +
         ui.card('Operating modes', '<table class="tbl" id="modes"><tr><th>Mode</th><th>Battery</th><th>PV</th><th>Generators</th></tr>' + MODES.map(function (m, i) {
           return '<tr data-m="' + i + '">' + m.map(function (c) { return '<td>' + c + '</td>'; }).join('') + '</tr>';
