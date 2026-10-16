@@ -38,6 +38,7 @@ emergency stop, generator fail-to-start, inverter faults, PM fibre cut…).
 * `docs/Villa_Somalia_SCADA_Design_Report_Rev1.docx` – design report Rev 1 (from Blueflag rev 0, revised with `tools/revise_report.py`).
 * `docs/Villa_Somalia_SCADA_Device_and_IO_List_Rev1.xlsx` – device and I/O list Rev 1: 244 hardwired points with I/O row, module and channel; 463 communication points on the *Comms Point List* sheet (built from rev 0 with `tools/harmonize_io_list.py`).
 * `docs/source/` – Blueflag's rev 0 originals, unchanged.
+* `docs/Villa_Somalia_IO_Allocation_Schneider_Requote.xlsx` – the I/O list Rev 1 allocated to Schneider Modicon M580 / Edge I/O modules and channels, with the changes against Schneider's offer of 16 Oct 2026, for their requote (`tools/schneider_io_allocation.py`).
 * `docs/SCADA_Design_Basis.md` – drawing analysis, client comments traceability, drawing-review findings.
 * `docs/Villa_Somalia_SCADA_Attachment_E_HMI_Screens.pdf` – Attachment E, the HMI screen mock-ups (12 screens). Captures in `docs/Attachment_E_Screens/`;
   rebuild with `node tools/capture_screens.js && node tools/build_attachment_e.js`, then `tools/revise_report.py` to refresh the three screens in section 12.
