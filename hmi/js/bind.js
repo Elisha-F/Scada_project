@@ -330,13 +330,19 @@
   A('FW-VPN-ACTIVE', function () { return b(S.sim.vpn); });
   A('GPS-HEALTHY', function () { return 1; });
   A('GPS-TIME-SYNC', function () { return 1; });
-  A('CP-HEALTHY', function () { return 1; });
-  A('CP-PS1-OK', function () { return 1; });
-  A('CP-PS2-OK', function () { return 1; });
+  var cp = S.sim.cp;
+  ['A', 'B'].forEach(function (c) {
+    A('CP-' + c + '-HEALTHY', function () { return b(cp[c]); });
+    A('CP-' + c + '-PS1-OK', function () { return 1; });
+    A('CP-' + c + '-PS2-OK', function () { return 1; });
+    A('CP-' + c + '-ACTIVE', function () { return b(cp.active === c && cp[c]); });
+  });
+  A('CP-REDUN-OK', function () { return b(cp.A && cp.B); });
+  A('CP-SWITCHOVER', function () { return b(cp.pulse > 0); });
   [1, 2, 3, 5, 6].forEach(function (n) { A('CP-ROW' + n + '-OK', function () { return 1; }); });
   A('CP-ROW4-OK', function () { return b(pmLink()); });
   for (var l = 1; l <= 8; l++) A('CP-LINK' + l + '-OK', function () { return 1; });
-  A('SYS-CP-HEALTHY', function () { return 1; });
+  A('SYS-CP-HEALTHY', function () { return b(cp.A || cp.B); }); // watchdog output of the active controller
   A('SYS-BEACON', function () { return b(S.alarmList && S.alarmList().some(function (a) { return !a.acked && a.level === 1; })); });
 
   /* commands and setpoints have no value of their own; they show the last command */
@@ -357,10 +363,13 @@
       var x = binds[i], v = x.fn();
       x.t.v = typeof v === 'boolean' ? (v ? 1 : 0) : v;
     }
+    if (S.sim.cp.pulse > 0) S.sim.cp.pulse--;
     var q = pmLink() ? 'GOOD' : 'BAD';
     pmTags.forEach(function (id) { T[id].q = q; });
     var qe = S.sim.faults.EMS_FAIL ? 'BAD' : 'GOOD';
     emsTags.forEach(function (id) { T[id].q = qe; });
+    // with both controllers down the SCADA receives nothing: every value is stale except the hardwired watchdog seen by the beacon
+    if (!S.cpInService()) S.tagOrder.forEach(function (id) { if (id !== 'SYS-CP-HEALTHY' && id !== 'SYS-BEACON') T[id].q = 'BAD'; });
   };
 
   /* history of every analogue tag, for trends */

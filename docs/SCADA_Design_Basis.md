@@ -37,7 +37,7 @@
 | # | Client requirement | Answer | Status |
 |---|---|---|---|
 | 1 | Complete SCADA design aligned with BESS and PV, GIS combiner, LVDBs, generators | Design report Rev 1 + the HMI in `hmi/` (17 screens: overview, 11 kV switchboard, President and PM stations, PV, battery, generators, energy management, auxiliaries, alarms, event log, trends, reports, communication status, I/O list, users, simulation) | **Done** |
-| 2 | Complete I/O list – all analogue and digital signals: VCBs, GIS relays, transformers, RMUs, DGs, combiner panels, weather station, UPS, aux power, fire | `docs/Villa_Somalia_SCADA_Device_and_IO_List_Rev1.xlsx`: **244 hardwired points** (208 DI, 32 DO, 4 AI) on six SICAM I/O rows with module and channel, and **456 communication points** (433 read, 23 write) with a tag per point on the *Comms Point List* sheet. The HMI loads the same 700 tags (`tools/import_io_list.py`) | **Done** – register addresses to be filled from vendor maps |
+| 2 | Complete I/O list – all analogue and digital signals: VCBs, GIS relays, transformers, RMUs, DGs, combiner panels, weather station, UPS, aux power, fire | `docs/Villa_Somalia_SCADA_Device_and_IO_List_Rev1.xlsx`: **244 hardwired points** (208 DI, 32 DO, 4 AI) on six SICAM I/O rows with module and channel, and **463 communication points** (440 read, 23 write) with a tag per point on the *Comms Point List* sheet. The HMI loads the same 707 tags (`tools/import_io_list.py`) | **Done** – register addresses to be filled from vendor maps |
 | 3 | Communication architecture, protocols, topology, cybersecurity | Design report sections 7–9; *SYSTEM → Communication status* screen; §4 below | **Done** – for approval |
 | 4 | Data sheets for controllers, field devices, servers, HMI; operational sequence | Design report sections 5–6 (equipment and EMS rules) and §5–6 below | Sequences **done**; vendor data sheets to be attached |
 
@@ -46,9 +46,9 @@
 | | DI | DO | AI | AO / write | Total |
 |---|---:|---:|---:|---:|---:|
 | Hardwired (SICAM I/O rows 1–6, 27 % spare overall) | 208 | 32 | 4 | – | 244 |
-| Communication (read) | | | | | 433 |
+| Communication (read) | | | | | 440 |
 | Communication (write: commands and setpoints) | | | | | 23 |
-| **Total** | | | | | **700** |
+| **Total** | | | | | **707** |
 
 The HMI *SYSTEM → I/O list* screen shows every point with its row, module and channel (hardwired) or protocol source (communication), its alarm level and its live value.
 
@@ -80,10 +80,10 @@ The HMI *SYSTEM → I/O list* screen shows every point with its row, module and 
 
 As in design report section 7:
 
-* **Controller:** Siemens SICAM A8000 **CP-8050** in the 11 kV switchroom SCADA cabinet, acting as plant controller and gateway. It talks to the SCADA servers by **IEC 60870-5-104**.
+* **Controller:** two Siemens SICAM A8000 **CP-8050** in **hot standby** (A active, B standby) in the 11 kV switchroom SCADA cabinet, acting as plant controller and gateway. Each has two power supplies and connects to both core switches; both talk to the SCADA servers by **IEC 60870-5-104**. I/O row 1 has its own CI-8532 interface instead of sitting on the controller backplane, so both controllers reach every I/O row. If A fails, B takes over and the SCADA view and remote switching continue. Siemens is to confirm the redundancy function, switchover time and the I/O row connection (design report open point 12).
 * **SCADA:** SICAM SCC on **two servers (A active, B hot standby)**, one operator workstation, one engineering laptop.
 * **Network:** two core switches (Moxa EDS-G512E); single-mode **fibre ring** through the field switches SW-MV (inverter station), SW-BESS, SW-GEN, SW-PRS and SW-PMS; firewall with VPN for remote support (off by default); GPS time server (NTP).
-* **Hardwired I/O:** six SICAM I/O rows. Row 1 (switchroom, backplane) and row 2 (SCADA cabinet, copper) are local; rows 3–6 (President station, PM station, BESS yard, generators) are on dedicated fibre pairs.
+* **Hardwired I/O:** six SICAM I/O rows. Rows 1 and 2 (SCADA cabinet, CI-8532 on copper) are local; rows 3–6 (President station, PM station, BESS yard, generators) are on dedicated fibre pairs.
 * **Field devices:** 11 kV relays AH1–AH7 by IEC 61850 or Modbus TCP; PV inverters by **power line communication to the PLC box**, then Modbus TCP; battery data **through the EMS**; generator controllers by Modbus; RMU relays ST260E by Modbus RTU through MGate gateways; LVDB meters PM5560; weather station on the blue'Log XM (weather station only); UPS by SNMP / Modbus.
 
 | Link | Protocol | Medium |

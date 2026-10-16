@@ -27,7 +27,7 @@
   var sim = S.sim = {
     t: Date.now(), speed: 1, running: true, bessLimit: 950, socMin: 10, crateLimit: true, heartbeat: 0,
     state: 2, stateSince: 0, seq: null, seqStep: 0, seqTimer: 0,
-    dg: {}, faults: {}, uf: {}, ufTimer: 0, cloud: 1, cloudTarget: 1,
+    dg: {}, faults: {}, uf: {}, ufTimer: 0, cp: { A: true, B: true, active: 'A', pulse: 0 }, cloud: 1, cloudTarget: 1,
     stateNames: ['BLACKOUT', 'BLACK-START', 'PV + BESS (normal)', 'DG ASSIST - starting', 'PV + BESS + DG', 'DG stopping / cool-down', 'DG ONLY (BESS unavailable)', 'EMERGENCY SHUTDOWN', 'MANUAL'],
     history: { t: [], v: {} }, histIds: []
   };
@@ -540,6 +540,17 @@
     }, 1000);
   };
 
+  /* hot standby controller pair (design report section 4): the standby takes over when the active controller fails */
+  S.cpCheck = function () {
+    var cp = sim.cp, other = cp.active === 'A' ? 'B' : 'A';
+    if (!cp[cp.active] && cp[other]) {
+      cp.active = other; cp.pulse = 10;
+      S.event('CP', 'Controller switchover: controller ' + other + ' now in control', 2);
+    }
+    if (!cp.A && !cp.B) S.event('CP', 'Both controllers failed: SCADA view and remote switching lost; operate locally', 1);
+  };
+  S.cpInService = function () { return sim.cp.A || sim.cp.B; };
+
   /* Fault injection for FAT / operator training */
   S.injectFault = function (k) {
     switch (k) {
@@ -570,9 +581,13 @@
         else { S.event('SIM', 'EMS restored'); }
         break;
       case 'OVERLOAD': sim.faults.OVERLOAD = !sim.faults.OVERLOAD; S.event('SIM', 'Office load step +400 kW ' + (sim.faults.OVERLOAD ? 'ON' : 'OFF')); break;
+      case 'CP_A_FAIL': case 'CP_B_FAIL':
+        var k2 = k.charAt(3); sim.cp[k2] = !sim.cp[k2];
+        S.event('SIM', 'Controller ' + k2 + (sim.cp[k2] ? ' repaired: rejoins as standby' : ' failed'), sim.cp[k2] ? 0 : 2);
+        S.cpCheck(); break;
       case 'COMM_PM': sim.faults.COMM_PM = !sim.faults.COMM_PM; S.event('NET', 'Fibre link to P.M. RMU ' + (sim.faults.COMM_PM ? 'LOST' : 'restored'), 2); break;
       case 'CLEAR':
-        sim.faults = {};
+        sim.faults = {}; sim.cp.A = true; sim.cp.B = true;
         ['FIRE.FZ_BESS.PRE_ALM', 'FIRE.FZ_BESS.FIRE', 'FIRE.FZ_BESS.REL_PENDING', 'FIRE.FZ_BESS.RELEASED', 'FIRE.FACP.SOUNDERS', 'FIRE.FZ_BESS.VENT_RUN',
           'BESS.SYS.BMS_FAULT', 'BESS.RACK3.FAULT', 'BESS.SYS.ESD', 'PV.INV3.FAULT', 'PV.INV3.ISO_FLT', 'GIS.AH6.SF6_LOW', 'DG.DG1.FAIL_START', 'DG.DG2.FAIL_START', 'PPC.CTRL.ESD', 'PV.INV3.MCCB_TRIP'].forEach(function (id) { set(id, 0); });
         set('PV.INV3.MCCB_ON', 1); sim.estop = false;

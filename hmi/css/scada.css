@@ -238,3 +238,4 @@ svg g.vp[data-c=bad] circle { fill: var(--bad); }
 .ktag { font-size: 10px; color: var(--muted); font-family: ui-monospace, Consolas, monospace; margin-top: 2px; }
 tr.cur td { background: #e7f0fb; font-weight: 700; } tr.cur td:first-child { box-shadow: inset 4px 0 0 var(--live); }
 .lamp { cursor: default; }
+.cprole { font-weight: 700; fill: #2a6fc0; letter-spacing: .04em; }

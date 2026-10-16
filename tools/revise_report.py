@@ -4,11 +4,14 @@ Usage: python3 tools/revise_report.py <rev0.docx> <out.docx>
 Each edit names the exact old text, so a changed source fails loudly instead of
 editing the wrong place.
 """
+import os
 import sys
 from copy import deepcopy
 import docx
 
 SRC, OUT = sys.argv[1], sys.argv[2]
+COMMS = 463  # communication points in I/O list rev 1 (tools/harmonize_io_list.py)
+FIG = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docs', 'figures')
 d = docx.Document(SRC)
 T = d.tables
 
@@ -75,7 +78,7 @@ cell(28, 2, 2, 'Draft complete', 'Rev 1, complete')
 
 # 2 Compliance table, client comment 3 (combiner panels now covered)
 cell(1, 3, 2, '224 hardwired signals and about 440 communication points, listed signal by signal',
-     '244 hardwired signals and 456 communication points, listed signal by signal, including the PV inverter AC breakers and the battery combiner panels')
+     '244 hardwired signals and ' + str(COMMS) + ' communication points, listed signal by signal, including the PV inverter AC breakers and the battery combiner panels')
 
 # 3 Design basis: generator ratings from the SLD
 cell(2, 6, 1, 'Ratings per generator supplier', 'DG1 550 kVA, DG2 660 kVA; step-up transformer 1.5 MVA, 11/0.4 kV')
@@ -101,7 +104,7 @@ cell(10, 4, 3, 'Fire panel states, emergency stop, container door', 'Fire panel 
 
 # 7 I/O summary
 par('The plant has 224 hardwired signals on 24 I/O modules in six rows, with 33% spare channels. A further 440 or so signals arrive over communication links. The full signal-by-signal list is in Attachment B.',
-    'The plant has 244 hardwired signals on 24 I/O modules in six rows, with 27% spare channels. Row 5, in the BESS and inverter yard, is the fullest at 19% spare; a third input module can be added there if more yard signals appear. A further 456 signals arrive over communication links. The full signal-by-signal list is in Attachment B: sheet IO List for hardwired signals and sheet Comms Point List for communication points.')
+    'The plant has 244 hardwired signals on 24 I/O modules in six rows, with 27% spare channels. Row 5, in the BESS and inverter yard, is the fullest at 19% spare; a third input module can be added there if more yard signals appear. A further ' + str(COMMS) + ' signals arrive over communication links. The full signal-by-signal list is in Attachment B: sheet IO List for hardwired signals and sheet Comms Point List for communication points.')
 for r, old, new in ((1, '82', '87'), (2, '24', '25'), (3, '41', '43'), (4, '41', '43'), (5, '18', '26'), (6, '18', '20'), (7, '224', '244')):
     cell(12, r, 6, old, new)
 cell(12, 3, 4, 'RMU, 630 kVA transformer, LVDB', 'RMU, 630 kVA transformer, LVDB, RMU UPS')
@@ -113,7 +116,7 @@ cell(13, 1, 5, '84', '64')
 cell(13, 5, 4, '224', '244')
 cell(13, 5, 5, '112', '92')
 cell(14, 1, 1, '188', '208')
-cell(14, 4, 1, 'About 440', '456')
+cell(14, 4, 1, 'About 440', str(COMMS))
 
 # 10 Breaker switching rules: earthing interlock
 par('such as closing a breaker onto an earthed circuit.', 'such as closing a breaker onto an earthed circuit, or energising the busbar through AH1 or AH3 while AH8 is open.')
@@ -181,6 +184,57 @@ par('A written procedure covers local operation of breakers and generators if th
 add_row(27, ['16', 'EMS functional description: generator start contact and Modbus commands, PV curtailment path and response time, black-start steps marked automatic or by operator, behaviour on loss of the CP-8050 link', 'PV and BESS supplier', 'Section 11; EMS communication points'])
 add_row(27, ['17', 'Generator controller start input for the EMS contact; dead-bus automatic start and island operation without the EMS', 'Generator supplier', 'Section 11; generator settings'])
 add_row(27, ['18', 'Under-frequency load-shedding settings and shedding order (AH6 first, AH4 last)', 'Client and protection engineer', 'Section 11; relay settings'])
+
+# ---- Rev 1: CP-8050 as a hot standby pair (controller A active, B standby)
+par('One Siemens SICAM A8000 CP-8050 controller collects every signal in the plant and passes it to two SCADA servers.',
+    'A hot standby pair of Siemens SICAM A8000 CP-8050 controllers collects every signal in the plant and passes it to two SCADA servers. Controller A is in control; controller B follows it and takes over if A fails.')
+par('1 controller, 5 network sources', 'redundant controller pair, 5 network sources')
+par('The SCADA servers, workstation, firewall, controller and 11 kV relays each connect to both core switches.',
+    'The SCADA servers, workstation, firewall, both controllers and the 11 kV relays each connect to both core switches.')
+par('one link carries all its signals to the controller.',
+    'one link carries all its signals to the controllers. Both controllers reach every row; only the active one reads inputs and drives outputs.')
+cell(5, 1, 0, 'SICAM A8000 CP-8050', 'SICAM A8000 CP-8050, hot standby pair A and B')
+cell(5, 1, 1, 'passes settings to the EMS', 'passes settings to the EMS; B takes over if A fails')
+cell(6, 4, 2, 'Lost until restored', 'Continue on the standby controller or server; lost only if both fail')
+cell(6, 5, 2, 'Breakers operated locally at the panels', 'Continues on the standby; if both controllers fail, breakers are operated locally')
+cell(12, 1, 1, 'beside the controller', 'SCADA cabinet')
+cell(12, 1, 2, 'None', 'CI-8532, electrical')
+cell(12, 1, 3, 'Backplane', 'Copper')
+cell(15, 1, 0, 'Controller to SCADA servers A and B', 'Controllers A and B to SCADA servers A and B')
+cell(15, 9, 0, 'Controller to I/O row 2', 'Controllers to I/O rows 1 and 2')
+add_row(15, ['Controller A to controller B', 'Redundancy synchronisation (Siemens)', 'Direct cable between the controllers, to confirm', 'Through the core switches, to confirm'])
+cell(16, 7, 0, 'Controller fails', 'Active controller fails')
+cell(16, 7, 1, 'SCADA loses its view; the EMS, relays and hardwired trips continue; the cold spare is fitted',
+     'The standby controller takes over; the SCADA view and remote switching continue; a level 2 alarm is raised')
+add_row(16, ['Both controllers fail', 'SCADA loses its view; the EMS, relays and hardwired trips continue; breakers are operated locally'])
+par('A cold spare is included; a hot standby pair is offered as an option.',
+    'Controllers A and B run as a hot standby pair, so it is no longer a single point. Each I/O row interface remains single; its failure loses only that row.')
+cell(22, 6, 0, 'Controller failure', 'Active controller failure')
+cell(22, 6, 1, 'Watchdog contact drops; alarm beacon sounds; EMS and relays continue', 'Standby controller takes over; level 2 alarm; SCADA view and remote switching continue')
+cell(22, 6, 2, 'Operate locally under the recovery procedure; fit the spare controller', 'Repair or replace the failed controller; it rejoins as standby')
+add_row(22, ['Failure of both controllers', 'Watchdog contact drops; alarm beacon sounds; EMS and relays continue', 'Operate locally under the recovery procedure'])
+par('if the controller or SCADA fails.', 'if both controllers or both SCADA servers fail.')
+cell(24, 1, 0, 'Plant controller (processor module)', 'Plant controller (processor module), hot standby pair')
+for r, old, new in ((1, '1', '2'), (2, '2', '4'), (3, '1', '2'), (4, '1', '2'), (9, '1', '2'), (11, '1 set', '2 sets')):
+    cell(24, r, 3, old, new)
+cell(24, 11, 0, 'IEC 61850', 'IEC 61850, redundancy if licensed separately')
+cell(26, 1, 0, 'CP-8050 with configured flash card (cold spare)', 'Configured flash card for the CP-8050')
+cell(26, 1, 2, 'Restores the controller in under an hour instead of waiting for delivery', 'Controller B is the running spare; the card restores a replaced controller quickly')
+par('A hot standby controller pair is available as an option for the client to decide. It needs Siemens to confirm how the remote I/O rows connect to two controllers.',
+    'The controllers are supplied as a hot standby pair. I/O row 1 has its own CI-8532 interface rather than sitting on the controller backplane, so both controllers reach it. Siemens will confirm the redundancy function and licence, the switchover time, and how the I/O rows connect to both controllers.')
+cell(27, 12, 1, 'Hot standby controller pair as an option', 'Hot standby controller pair: redundancy function and licence, switchover time, connection of the I/O rows to both controllers, product numbers')
+cell(27, 12, 2, 'Client decision', 'Siemens')
+cell(27, 12, 3, 'Section 13', 'Sections 4, 7, 8, 13')
+
+# figures 1 and 3 redrawn for the controller pair (tools/draw_report_figures.py)
+from PIL import Image
+for k, name in ((0, 'fig1_architecture.png'), (2, 'fig3_network.png')):
+    shape = d.inline_shapes[k]
+    rid = shape._inline.graphic.graphicData.pic.blipFill.blip.embed
+    path = os.path.join(FIG, name)
+    d.part.related_parts[rid]._blob = open(path, 'rb').read()
+    w, h = Image.open(path).size
+    shape.height = int(shape.width * h / w)
 
 d.save(OUT)
 print('saved', OUT)

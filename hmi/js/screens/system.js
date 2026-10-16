@@ -254,11 +254,13 @@
     // core
     s += '<rect class="zonebg" x="10" y="140" width="1280" height="150" rx="6"/><text class="zonelbl" x="20" y="158">11 kV SWITCHROOM · CONTROL AND SUBSTATION ZONES</text>';
     s += nb(240, 175, 190, 'Core switch A', 'EDS-G512E', 'SW-CORE-A-HEALTHY') + nb(870, 175, 190, 'Core switch B', 'EDS-G512E', 'SW-CORE-B-HEALTHY');
-    s += nb(540, 175, 220, 'SICAM A8000 CP-8050', 'plant controller and gateway', 'CP-HEALTHY&CP-PS1-OK&CP-PS2-OK');
+    s += nb(450, 175, 170, 'CP-8050 A', '', 'CP-A-HEALTHY&CP-A-PS1-OK&CP-A-PS2-OK') + nb(680, 175, 170, 'CP-8050 B', '', 'CP-B-HEALTHY&CP-B-PS1-OK&CP-B-PS2-OK');
+    s += '<text class="lbl-xs cprole" data-cp="A" x="535" y="205" text-anchor="middle"></text><text class="lbl-xs cprole" data-cp="B" x="765" y="205" text-anchor="middle"></text>';
+    s += lk('620,194 680,194', 'serial', 'CP-REDUN-OK') + lbl(650, 186, 'sync');
     s += nb(540, 240, 220, '11 kV relays AH1 to AH7', 'IEC 61850 / Modbus TCP', 'AH1-RLY-HEALTHY&AH2-RLY-HEALTHY&AH3-RLY-HEALTHY&AH4-RLY-HEALTHY&AH5-RLY-HEALTHY&AH6-RLY-HEALTHY&AH7-RLY-HEALTHY');
     [125, 315, 505, 695].forEach(function (x, i) { s += lk(x + ',88 ' + x + ',130 ' + (i < 2 ? 335 : 965) + ',130 ' + (i < 2 ? 335 : 965) + ',175'); });
     s += lk('925,88 925,130 965,130') + lk('1160,88 1160,130 965,130');
-    s += lk('430,194 540,194') + lk('760,194 870,194') + lbl(485, 188, 'IEC 104 up') + lbl(815, 188, 'both cores');
+    s += lk('430,194 450,194') + lk('850,194 870,194') + lbl(650, 168, 'hot standby pair · IEC 104 to servers A and B · each controller on both core switches');
     s += lk('600,240 430,214') + lk('700,240 870,214') + lbl(820, 262, 'dual-connected', 'start');
     s += lbl(1180, 170, 'SNMP v3 · syslog', 'middle');
     // ring
@@ -274,13 +276,13 @@
       [345, 'EMS', 'battery via EMS', '', 340, 160], [575, 'DG1, DG2 controllers', 'Modbus', '', 570, 160], [805, 'MGate + PM5560', 'ST260E · LVDB meter', 'PRS-RLY-HEALTHY', 800, 160], [1035, 'MGate + PM5560', 'ST260E · LVDB meter', 'PMS-RLY-HEALTHY', 1030, 160]];
     dev.forEach(function (d) { s += nb(d[0], 430, d[5], d[1], d[2], d[3]) + lk((d[0] + d[5] / 2) + ',430 ' + (d[0] + d[5] / 2) + ',405 ' + (d[4] + 85) + ',405 ' + (d[4] + 85) + ',383'); });
     // I/O rows
-    s += '<rect class="zonebg" x="10" y="515" width="1280" height="115" rx="6"/><text class="zonelbl" x="20" y="533">HARDWIRED I/O ROWS · SICAM I/O LINK FROM THE CP-8050</text>';
-    var rows = [['Row 1', 'switchroom · backplane'], ['Row 2', 'SCADA cabinet · copper'], ['Row 3', 'President · fibre pair'], ['Row 4', 'PM · fibre pair'], ['Row 5', 'BESS yard · fibre pair'], ['Row 6', 'generators · fibre pair']];
+    s += '<rect class="zonebg" x="10" y="515" width="1280" height="115" rx="6"/><text class="zonelbl" x="20" y="533">HARDWIRED I/O ROWS · SICAM I/O LINK FROM BOTH CONTROLLERS</text>';
+    var rows = [['Row 1', 'SCADA cabinet · copper'], ['Row 2', 'SCADA cabinet · copper'], ['Row 3', 'President · fibre pair'], ['Row 4', 'PM · fibre pair'], ['Row 5', 'BESS yard · fibre pair'], ['Row 6', 'generators · fibre pair']];
     rows.forEach(function (r, i) {
       var x = 40 + i * 205;
       s += nb(x, 570, 180, r[0], r[1], 'CP-ROW' + (i + 1) + '-OK') + lk((x + 90) + ',570 ' + (x + 90) + ',555 530,555', i < 2 ? '' : 'fo', 'CP-ROW' + (i + 1) + '-OK');
     });
-    s += lk('540,205 530,205 530,555', 'serial') + lbl(536, 548, 'SICAM I/O link', 'start');
+    s += lk('530,213 530,555', 'serial') + lk('765,213 765,228 530,228', 'serial') + lbl(536, 548, 'SICAM I/O link, both controllers', 'start');
     return s + '</svg>';
   }
   S.screens.comms = {
@@ -293,13 +295,17 @@
           ['Controller to SCADA servers A and B', 'IEC 60870-5-104', 'Ethernet, both core switches'], ['Controller to 11 kV relays', 'IEC 61850 or Modbus TCP', 'Ethernet, both core switches'],
           ['PV inverters to PLC box', 'Power line communication', 'AC power cables'], ['Controller to PLC box', 'Modbus TCP', 'Fibre ring'], ['Controller to EMS (battery data)', 'Modbus TCP', 'Fibre ring'],
           ['Controller to generator controllers', 'Modbus TCP or RTU via gateway', 'Fibre ring'], ['Controller to RMU relays ST260E', 'Modbus RTU via MGate', 'RS485, then fibre ring'],
-          ['Controller to meters, weather logger, UPS', 'Modbus TCP or SNMP', 'Fibre ring or copper'], ['Controller to I/O row 2', 'SICAM I/O link', 'Copper, same cabinet'],
+          ['Controller to meters, weather logger, UPS', 'Modbus TCP or SNMP', 'Fibre ring or copper'], ['Controllers to I/O rows 1 and 2', 'SICAM I/O link', 'Copper, same cabinet'], ['Controller A to controller B', 'Redundancy synchronisation (Siemens, to confirm)', 'Direct cable, and through the core switches'],
           ['Controller to I/O rows 3 to 6', 'SICAM I/O link, optical', 'Dedicated fibre pair'], ['All devices to GPS time server', 'NTP', 'Ethernet'], ['Network devices to SCADA', 'SNMP v3, syslog', 'Ethernet'],
           ['Remote support', 'VPN through the firewall', 'Internet, off by default']
         ].map(function (r) { return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td></tr>'; }).join('') + '</table>') + '</div><aside>' +
         ui.card('Health signals', '<div class="fp-grid1">' + health.map(function (id) { return ui.lamp(id, id); }).join('') + '</div>', 'dark') + '</aside></div>';
     },
     update: function (root) {
+      root.querySelectorAll('[data-cp]').forEach(function (el) {
+        var c = el.getAttribute('data-cp'), cp = S.sim.cp;
+        el.textContent = !cp[c] ? 'FAILED' : cp.active === c ? 'ACTIVE' : 'STANDBY';
+      });
       root.querySelectorAll('[data-net]').forEach(function (g) { var e = g.getAttribute('data-net'); if (!e) return; var ok = ui.ev(e); g.classList.toggle('ok', ok); g.classList.toggle('nok', !ok); });
       root.querySelectorAll('[data-netl]').forEach(function (l) { var e = l.getAttribute('data-netl'); if (e) l.classList.toggle('nok', !ui.ev(e)); });
     }
@@ -369,7 +375,7 @@
     ['AH4_OC', 'AH4 President feeder: overcurrent trip'], ['AH6_EF', 'AH6 PM feeder: earth fault trip'], ['RELAY_RESET', 'Reset relays locally at the panels'],
     ['BESS_FAULT', 'Battery fault (level 1)'], ['FIRE_PRE', 'Battery container: fire pre-alarm'], ['FIRE_CONF', 'Battery container: fire confirmed'],
     ['ESTOP', 'Press emergency stop in the switchroom'], ['ESTOP_RESET', 'Reset the emergency stop locally'], ['DG1_FAILSTART', 'DG1 fails to start next time'], ['DG_MAN', 'Set both generators to manual at the controller'],
-    ['EMS_FAIL', 'EMS stops / restarts (generators take over)'], ['OVERLOAD', 'Office load step +400 kW on / off'], ['INV3_FAULT', 'NB03 insulation fault'], ['MCCB_NB03', 'NB03 AC breaker trips'], ['CLOUD', 'Heavy cloud on / off'], ['SF6_AH6', 'AH6 gas pressure low'],
+    ['CP_A_FAIL', 'Controller A fails / repaired'], ['CP_B_FAIL', 'Controller B fails / repaired'], ['EMS_FAIL', 'EMS stops / restarts (generators take over)'], ['OVERLOAD', 'Office load step +400 kW on / off'], ['INV3_FAULT', 'NB03 insulation fault'], ['MCCB_NB03', 'NB03 AC breaker trips'], ['CLOUD', 'Heavy cloud on / off'], ['SF6_AH6', 'AH6 gas pressure low'],
     ['COMM_PM', 'Cut / restore the fibre to the PM station'], ['CLEAR', 'Clear all simulated faults']
   ];
   S.screens.sim = {

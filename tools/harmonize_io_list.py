@@ -2,7 +2,9 @@
 
 Adds the signals found missing in the I/O review (AH8 breaker, LV main breakers,
 inverter AC MCCBs, auxiliary transformer fuse, RMU UPS, relay trip-circuit /
-SEF / reverse-power points, battery combiner panels), keeps every formula range
+SEF / reverse-power points, battery combiner panels), makes the CP-8050 a hot
+standby pair (controller A active, B standby; I/O row 1 moved off the controller
+backplane so both controllers reach it), keeps every formula range
 in step, and adds a 'Comms Point List' sheet that expands each communication
 point line into one tagged signal per device.
 
@@ -130,6 +132,23 @@ insert_after(crows, 2, 'Container fire status', [
     [BT, batt_src, 'Battery combiner panel DC switch closed (2 points)', 'Read', 'Status', '-', 1, 2, None, '-', REV + '. Combiner panels BCP unit 1# and 2#, if the EMS exposes them'],
     [BT, batt_src, 'Battery combiner panel fuse blown (2 points)', 'Read', 'Status', '-', 1, 2, None, '-', REV + '. As above'],
 ])
+# redundant controller pair: health and supplies per controller, plus redundancy status
+CPDEV = 'SICAM CP-8050 internal'
+cp_src = next(v[1] for v, _ in crows if v[0] == CPDEV)
+PAIR = ' (controllers A and B)'
+for v, _ in crows:
+    if v[0] == CPDEV and v[2] in ('Controller healthy', 'Power supply 1 healthy', 'Power supply 2 healthy'):
+        v[2] += PAIR
+        v[6] = 2
+        v[10] = REV + '. One per controller of the hot standby pair'
+    if v[0] == CPDEV and v[2] == 'I/O row 1 healthy':
+        v[2] = 'I/O row 1 link healthy'
+        v[10] = REV + '. Row 1 now has its own CI-8532 interface, so both controllers reach it'
+insert_after(crows, 2, 'Link to each communication device healthy (8 links)', [
+    [CPDEV, cp_src, 'Controller active' + PAIR, 'Read', 'Status', '-', 2, 1, None, '-', REV + '. Shows which controller is in control'],
+    [CPDEV, cp_src, 'Standby controller synchronised and ready', 'Read', 'Status', '-', 1, 1, None, '-', REV + '. Off means a failure of the active controller would not be covered'],
+    [CPDEV, cp_src, 'Controller switchover occurred', 'Read', 'Event', '-', 1, 1, None, '-', REV + '. Logged with time; resets on acknowledgement'],
+])
 for i, (v, _) in enumerate(crows):
     v[8] = '=G%d*H%d' % (i + 2, i + 2)
 cp_new_last = 1 + len(crows)
@@ -155,6 +174,26 @@ for v, _ in drows:
         v[13] = (v[13] + ' ' if v[13] else '') + 'Breaker position, trip, earth switch and gas pressure also wired to row 1 (rev 1).'
     if v[0] == 'D04':
         v[13] = (v[13] + ' ' if v[13] else '') + 'Battery combiner panel status read through the EMS if available (rev 1).'
+    if v[0] == 'D18':
+        v[7] = 2
+        v[8] = '11 kV switchroom, SCADA cabinet'
+        v[13] = 'Hot standby pair (rev 1): controller A active, controller B standby, both on both core switches. Both connect to the SCADA servers by IEC 104. Siemens to confirm the redundancy function, switchover time and how the I/O rows connect to both controllers.'
+    if v[0] == 'D19':
+        v[7] = 4
+        v[13] = 'Two per controller (rev 1). Confirm the CP-8050 supports a second supply.'
+    if v[0] in ('D20', 'D21'):
+        v[7] = 2
+        v[13] = (v[13] + ' ' if v[13] else '') + 'One per controller (rev 1).'
+    if v[0] == 'D24':
+        v[13] = 'Alarm beacon and controller healthy output, driven by the active controller; the healthy output drops only if both controllers fail (rev 1).'
+    if v[0] == 'D26':
+        v[7] = 2
+        v[8] = 'Rows 1, 2'
+        v[12] = 'Rows 1, 2'
+        v[13] = 'Row 1 moved off the controller backplane onto its own CI-8532 so both controllers reach it (rev 1). 24 V variant: CI-8530, 6MF2853-0AA00.'
+    if v[0] == 'D28':
+        v[7] = 2
+        v[13] = 'One set per controller, including the redundancy function if licensed separately (rev 1).'
     if v[0] == 'D09':
         v[13] = (v[13] + ' ' if v[13] else '') + 'Auxiliary transformer also has its XRNT-3A fuse striker wired to row 2 (rev 1).'
 write_rows(dl, 2, drows, dl_last + 2)
@@ -170,7 +209,7 @@ INST = {
     'Power meter PM5560': ['PRS-LV', 'PMS-LV', 'AUXLV'],
     "Weather logger blue'Log XM": ['WS'], 'UPS': ['UPS'],
     'Network switches (core and field)': ['SW-CORE-A', 'SW-CORE-B', 'SW-MV', 'SW-BESS', 'SW-GEN', 'SW-PRS', 'SW-PMS'],
-    'Firewall and GPS time server': ['FW', 'GPS'], 'PLC box': ['PLCBOX'], 'SICAM CP-8050 internal': ['CP'],
+    'Firewall and GPS time server': ['FW', 'GPS'], 'PLC box': ['PLCBOX'], 'SICAM CP-8050 internal': ['CP-A', 'CP-B', 'CP'],
 }
 PH3 = ['L1', 'L2', 'L3']
 CODE = {
@@ -209,15 +248,17 @@ CODE = {
     'Input voltage': 'U-IN', 'Output load': 'LOAD', 'Battery charge': 'BATT-CHG', 'Runtime remaining': 'RUNTIME',
     'Time synchronised / VPN session active': 'TIME-SYNC', 'On battery': 'ON-BATT', 'Fault': 'FLT', 'Device healthy': 'HEALTHY', 'Ring status': 'RING-OK',
     'Communication healthy per inverter (4 points)': ['NB01-COMM', 'NB02-COMM', 'NB03-COMM', 'NB04-COMM'],
-    'Controller healthy': 'HEALTHY', 'Power supply 1 healthy': 'PS1-OK', 'Power supply 2 healthy': 'PS2-OK',
-    'I/O row 1 healthy': 'ROW1-OK', 'I/O row 2 link healthy': 'ROW2-OK', 'I/O row 3 link healthy': 'ROW3-OK',
+    'Controller healthy (controllers A and B)': 'HEALTHY', 'Power supply 1 healthy (controllers A and B)': 'PS1-OK',
+    'Power supply 2 healthy (controllers A and B)': 'PS2-OK', 'Controller active (controllers A and B)': 'ACTIVE',
+    'Standby controller synchronised and ready': 'REDUN-OK', 'Controller switchover occurred': 'SWITCHOVER',
+    'I/O row 1 link healthy': 'ROW1-OK', 'I/O row 2 link healthy': 'ROW2-OK', 'I/O row 3 link healthy': 'ROW3-OK',
     'I/O row 4 link healthy': 'ROW4-OK', 'I/O row 5 link healthy': 'ROW5-OK', 'I/O row 6 link healthy': 'ROW6-OK',
     'Link to each communication device healthy (8 links)': ['LINK%d-OK' % i for i in range(1, 9)],
 }
 # (level, alarm state) for status points; measured values carry no alarm here
 ALARM = [
-    (r'TRIP-|SHUTDOWN|^FIRE$|ALM-L1|BCP\d-FUSE', '1', 'On'), (r'RLY-HEALTHY|^HEALTHY$|COMM-OK|RING-OK|PS\d-OK|ROW\d-OK|LINK\d-OK|BCP\d-SW-CLSD', '2', 'Off'),
-    (r'TCS-ALM|ALM-L2|^ALM$|^FLT$|ON-BATT', '2', 'On'), (r'WARN|ALM-L3|PV-CURT|GEN-START-REQ|DREC|VPN-ACTIVE', '3', 'On'),
+    (r'TRIP-|SHUTDOWN|^FIRE$|ALM-L1|BCP\d-FUSE', '1', 'On'), (r'RLY-HEALTHY|^HEALTHY$|COMM-OK|RING-OK|PS\d-OK|ROW\d-OK|LINK\d-OK|BCP\d-SW-CLSD|REDUN-OK', '2', 'Off'),
+    (r'TCS-ALM|ALM-L2|^ALM$|^FLT$|ON-BATT', '2', 'On'), (r'WARN|ALM-L3|PV-CURT|GEN-START-REQ|DREC|VPN-ACTIVE|SWITCHOVER', '3', 'On'),
     (r'TIME-SYNC', '3', 'Off'),
 ]
 if 'Comms Point List' in wb.sheetnames:
@@ -229,6 +270,16 @@ hstyle = [copy(io.cell(row=1, column=c)._style) for c in range(1, 12)]
 bstyle = copy(io.cell(row=2, column=1)._style)
 out = []
 devorder = []
+
+
+def cp_point(point, inst):
+    """'Controller healthy (controllers A and B)' -> 'Controller A healthy' for the tag of controller A."""
+    if inst not in ('CP-A', 'CP-B') or not point.endswith(PAIR):
+        return point
+    base, c = point[:-len(PAIR)], inst[-1]
+    return base.replace('Controller', 'Controller ' + c, 1) if base.startswith('Controller') else 'Controller ' + c + ' ' + base[0].lower() + base[1:]
+
+
 for li, (v, _) in enumerate(crows):
     if v[0] not in devorder:
         devorder.append(v[0])
@@ -238,6 +289,8 @@ for li, (v, _) in enumerate(crows):
         insts = ['AH1', 'AH2', 'AH3', 'AH4', 'AH6', 'AH7']
     if point.startswith('Reverse power trip'):
         insts = ['AH1']
+    if dev == CPDEV:
+        insts = ['CP-A', 'CP-B'] if point.endswith(PAIR) else ['CP']
     assert len(insts) == ndev, (dev, point, insts, ndev)
     code = CODE[point]
     codes = code if isinstance(code, list) else [code]
@@ -262,8 +315,8 @@ for li, (v, _) in enumerate(crows):
                     if re.search(pat, cc):
                         lvl, when = l, w
                         break
-            out.append([(devorder.index(dev), ii, li, ci), tag, dev.replace('NB01 to NB04', inst).replace('DG1, DG2', inst).replace('AH1 to AH7', inst) if inst not in ('CP', 'PLCBOX') else dev,
-                        point, dirn, dtype, unit, src, lvl, when, v[9], note])
+            out.append([(devorder.index(dev), ii, li, ci), tag, dev.replace('NB01 to NB04', inst).replace('DG1, DG2', inst).replace('AH1 to AH7', inst) if not (inst.startswith('CP') or inst == 'PLCBOX') else (dev.replace(' internal', ' ' + inst[-1]) if inst in ('CP-A', 'CP-B') else dev),
+                        cp_point(point, inst), dirn, dtype, unit, src, lvl, when, v[9], note])
 out = [o[1:] for o in sorted(out, key=lambda o: o[0])]
 tl = [o[0] for o in out]
 assert len(tl) == len(set(tl)), 'duplicate comms tag'
@@ -281,6 +334,29 @@ for col, w in zip('ABCDEFGHIJK', [22, 34, 44, 10, 12, 8, 30, 11, 11, 11, 50]):
 ws.freeze_panes = 'B2'
 ws.auto_filter.ref = 'A1:K%d' % (len(out) + 1)
 
+# ---------------------------------------------------------------- IO Rows: row 1 off the backplane
+ior = wb['IO Rows']
+for r in range(2, ior.max_row + 1):
+    if ior.cell(row=r, column=1).value == 1:
+        ior.cell(row=r, column=2).value = '11 kV switchroom, SCADA cabinet'
+        ior.cell(row=r, column=3).value = 'CI-8532 (electrical)'
+        ior.cell(row=r, column=4).value = '6MF2853-2AA00'
+        ior.cell(row=r, column=5).value = 'Copper, inside the cabinet'
+    for c in range(1, ior.max_column + 1):
+        x = ior.cell(row=r, column=c).value
+        if isinstance(x, str) and x.startswith('Each remote row is a small panel'):
+            ior.cell(row=r, column=c).value = ('Each row has its own interface module and is reached by both controllers of the hot standby pair; '
+                                               'only the active controller reads inputs and drives outputs. Each remote row is a small panel near its '
+                                               'equipment, with field contacts wired a short distance to that panel.')
+        if isinstance(x, str) and x.startswith('Confirm with Siemens'):
+            ior.cell(row=r, column=c).value = x + ' Also confirm how the I/O rows connect to both controllers of the redundant pair.'
+
+# ---------------------------------------------------------------- Datasheets
+dsh = wb['Datasheets']
+for r in range(2, dsh.max_row + 1):
+    if dsh.cell(row=r, column=6).value == '6MF2805-0AA00':
+        dsh.cell(row=r, column=7).value = 'Datasheet; CP-8050 system manual; redundancy description; security manual'
+
 # ---------------------------------------------------------------- Read Me
 rm = wb['Read Me']
 for row in rm.iter_rows():
@@ -289,6 +365,13 @@ for row in rm.iter_rows():
             rm.cell(row=c.row, column=c.column + 1).value = (
                 'Rev 1, 15 Oct 2026: harmonised with the design report, the drawings and the HMI demonstration. '
                 'For client submission as Attachment B.')
+        if c.value == 'Controller':
+            rm.cell(row=c.row, column=c.column + 1).value = (
+                'Two Siemens SICAM A8000 CP-8050 in hot standby (A active, B standby) as plant controller and gateway. '
+                'The embedded EMS keeps dispatch of PV, battery and generators.')
+        if c.value == 'SCADA':
+            rm.cell(row=c.row, column=c.column + 1).value = (
+                'Siemens SICAM SCC on two servers (active and hot standby), linked to both controllers by IEC 60870-5-104.')
         if c.value == 'Comms Points':
             rm.cell(row=c.row, column=c.column + 1).value = (
                 'Typical signals read or written over communication links, per device type, with quantities. Replace with each vendor\'s point table.')
@@ -307,8 +390,12 @@ changes = [
     'Combiner panels: trip of the four inverter AC MCCBs (row 5); battery combiner panel switch and fuse status through the EMS.',
     'Auxiliary transformer XRNT-3A fuse blown (row 2); RMU UPS 2 kVA on battery and fault at both office stations (rows 3, 4).',
     '11 kV relays: trip circuit supervision (7), sensitive earth fault trip (6) and reverse power trip on AH1 added as communication points.',
-    'Totals: 244 hardwired signals and 456 communication points. Overall spare is 27%; row 5 drops to 19% (6 of 32 channels), just under the 20% target: add a third DI-8112 there if more yard signals appear.',
+    'Totals: 244 hardwired signals and %d communication points.' % len(out) + ' Overall spare is 27%; row 5 drops to 19% (6 of 32 channels), just under the 20% target: add a third DI-8112 there if more yard signals appear.',
     'Comms Point List sheet added. Devices D49 and D50 added to the Device List.',
+    'Controller made redundant: two CP-8050 (A active, B hot standby), each with two power supplies, its own Ethernet interface, flash card '
+    'and licences. I/O row 1 moved off the controller backplane onto its own CI-8532 so both controllers reach it. Communication points added '
+    'for each controller\'s health and supplies, which controller is active, standby ready and switchover. Siemens to confirm the redundancy '
+    'function, switchover time and how the I/O rows connect to both controllers.',
 ]
 for i, t in enumerate(changes):
     rm.cell(row=nr + 1 + i, column=1).value = i + 1

@@ -79,6 +79,7 @@
     if (!t || (t.type !== 'DO' && t.type !== 'AO')) return { ok: false, msg: 'Not a command or setpoint tag' };
     if (NEED[t.opby] === undefined) return { ok: false, msg: tagId + ' is operated automatically, not by users' };
     if (S.user.level < NEED[t.opby]) return { ok: false, msg: t.opby + ' role required' };
+    if (!S.cpInService()) return { ok: false, msg: 'No controller in service: operate locally' };
     var res = { ok: true, msg: tagId + ' executed' }, sim = S.sim;
     var bc = breakerCmd(tagId);
     if (bc) {
