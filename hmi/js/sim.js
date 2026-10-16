@@ -2,13 +2,13 @@
  * Plant simulator + Power Plant Controller (PPC) logic.
  *
  * The HMI is data-source agnostic: screens only read/write SCADA.tags.
- * In production this module is replaced by the driver layer (IEC 61850 / Modbus
+ * In production this module is replaced by the driver layer (Modbus TCP / EtherNet/IP
  * gateway publishing over WebSocket). For FAT/training it simulates the
  * islanded Villa Somalia microgrid so every screen, alarm and sequence can be
  * demonstrated.
  */
 (function (S) {
-  var C = S.config, T = S.tags;
+  var C = S.config, T = S.mtags;
   var SQ3 = Math.sqrt(3);
 
   function set(id, v) { var t = T[id]; if (t) t.v = v; }
@@ -25,15 +25,15 @@
   S.setCB = setCB;
 
   var sim = S.sim = {
-    t: Date.now(), speed: 1, running: true,
+    t: Date.now(), speed: 1, running: true, bessLimit: 950, socMin: 10, crateLimit: true, heartbeat: 0,
     state: 2, stateSince: 0, seq: null, seqStep: 0, seqTimer: 0,
-    dg: {}, faults: {}, cloud: 1, cloudTarget: 1,
+    dg: {}, faults: {}, uf: {}, ufTimer: 0, cp: { A: true, B: true, active: 'A', pulse: 0 }, cloud: 1, cloudTarget: 1,
     stateNames: ['BLACKOUT', 'BLACK-START', 'PV + BESS (normal)', 'DG ASSIST - starting', 'PV + BESS + DG', 'DG stopping / cool-down', 'DG ONLY (BESS unavailable)', 'EMERGENCY SHUTDOWN', 'MANUAL'],
     history: { t: [], v: {} }, histIds: []
   };
 
   C.generators.forEach(function (g) {
-    sim.dg[g.id] = { status: 'OFF', timer: 0, runFor: 0, request: false, failNext: false };
+    sim.dg[g.id] = { status: 'OFF', timer: 0, runFor: 0, request: false, manualRun: false, failNext: false };
   });
 
   /* ---------------- initial states ---------------- */
@@ -59,7 +59,7 @@
     set('GIS.BUS.U', 11); set('GIS.BUS.F', 50); set('GIS.DC.U_DC', 112.4); set('GIS.ROOM.T_ROOM', 26);
     set('AUX.UPS_SCADA.LOAD', 38); set('AUX.UPS_SCADA.AUTONOMY', 95); set('AUX.UPS_SCADA.U_OUT', 230);
     C.gis.panels.forEach(function (p) { set('GIS.' + p.id + '.E_IMP', 12 + Math.random() * 300); set('GIS.' + p.id + '.E_EXP', Math.random() * 5); });
-    sim.histIds = S.tagOrder.filter(function (id) {
+    sim.histIds = S.mtagOrder.filter(function (id) {
       var t = T[id]; return t.type === 'AI' && !/STR\d|MPPT|\.W\d\d_P|RACK\d\.U_C/.test(id);
     });
     sim.histIds.forEach(function (id) { sim.history.v[id] = []; });
@@ -87,7 +87,8 @@
     var d = sim.dg[g.id], p = 'DG.' + g.id;
     var tripped = on(p + '.SHUTDOWN') || on(p + '.ESTOP') || on(p + '.FAIL_START') || on('PPC.CTRL.ESD');
     if (tripped && d.status !== 'OFF') { d.status = 'OFF'; d.timer = 0; setCB(p + '_ACB', false); }
-    var want = d.request && !tripped && on(p + '.MODE_AUTO') && !on('PPC.CTRL.ESD');
+    // AUTO: the EMS requests the start; MANUAL: the operator's start/stop command (manualRun)
+    var want = (on(p + '.MODE_AUTO') ? d.request : d.manualRun) && !tripped && !on('PPC.CTRL.ESD');
     d.timer += dt;
     switch (d.status) {
       case 'OFF':
@@ -135,7 +136,12 @@
     { txt: 'Close AH8 NECR feeder - establish 11kV neutral earthing', fn: function () { return S.closeIfAllowed('GIS.AH8'); } },
     { txt: 'Start grid-forming source (BESS PCS, else lead DG)', fn: function () {
       if (bessAvailable()) { setCB('BESS.LV_ACB', true); set('BESS.SYS.CMD_MODE', 1); set('BESS.PCS1.RUN', 1); set('BESS.PCS2.RUN', 1); return S.closeIfAllowed('GIS.AH3'); }
-      S.closeIfAllowed('GIS.AH1'); sim.dg.DG1.request = true; return sim.dg.DG1.status === 'ONLINE' || sim.dg.DG2.status === 'ONLINE';
+      // on generators: start every available set before the office feeders close, since one set cannot carry both offices at peak
+      S.closeIfAllowed('GIS.AH1');
+      var gens = C.generators.filter(function (g) { return on('DG.' + g.id + '.READY') && on('DG.' + g.id + '.MODE_AUTO'); });
+      gens.forEach(function (g) { sim.dg[g.id].request = true; });
+      var online = C.generators.filter(function (g) { return sim.dg[g.id].status === 'ONLINE'; }).length;
+      return online > 0 && online >= gens.length;
     } },
     { txt: 'Soft-energise 11kV busbar - check U = 11kV ±5 %, f = 50Hz ±0.5 %', fn: function () { return sim.busLive; } },
     { txt: 'Close AH5 SAT feeder - restore plant auxiliaries', fn: function () { return S.closeIfAllowed('GIS.AH5'); } },
@@ -151,7 +157,7 @@
       C.gis.panels.some(function (p) { return on('GIS.' + p.id + '.LOCKOUT_86') && p.kind !== 'feeder' && p.kind !== 'spare'; });
   }
   function bessAvailable() {
-    return !on('BESS.SYS.BMS_FAULT') && !on('BESS.SYS.ESD') && !on('FIRE.FZ_BESS.FIRE') && !on('FIRE.FZ_BESS.PRE_ALM') && get('BESS.SYS.SOC') > C.ppc.socMin &&
+    return !on('BESS.SYS.BMS_FAULT') && !on('BESS.SYS.ESD') && !on('FIRE.FZ_BESS.FIRE') && !on('FIRE.FZ_BESS.PRE_ALM') && get('BESS.SYS.SOC') > sim.socMin && !sim.faults.EMS_FAIL &&
       !on('BESS.PCS1.FAULT') && !on('GIS.AH3.LOCKOUT_86');
   }
 
@@ -159,11 +165,11 @@
     if (sim.busLive) { S.event && S.event('PPC', 'Black-start rejected - 11kV bus already energised'); return false; }
     sim.seq = 'BLACKSTART'; sim.seqStep = 0; sim.seqTimer = 0; sim.state = 1; S.event && S.event('PPC', 'Black-start sequence started'); return true; };
   S.plantESD = function () {
+    // hardwired emergency stop (design report section 11): battery, PV and generators stop; 11 kV breakers stay as they are
     set('PPC.CTRL.ESD', 1); sim.seq = null;
-    C.gis.panels.forEach(function (p) { setCB('GIS.' + p.id, false); });
     set('BESS.PCS1.RUN', 0); set('BESS.PCS2.RUN', 0);
-    C.generators.forEach(function (g) { sim.dg[g.id].request = false; setCB('DG.' + g.id + '_ACB', false); });
-    S.event && S.event('PPC', 'PLANT EMERGENCY SHUTDOWN executed - all 11kV VCBs opened', 1);
+    C.generators.forEach(function (g) { sim.dg[g.id].request = false; sim.dg[g.id].manualRun = false; setCB('DG.' + g.id + '_ACB', false); });
+    S.event && S.event('ESTOP', 'Emergency stop: battery, PV and generators stopped by the hardwired circuit', 1);
   };
 
   /* ---------------- main step ---------------- */
@@ -211,10 +217,11 @@
 
     /* ---- loads ---- */
     var op = officeProfile(h);
-    var shed = on('PPC.CTRL.LOAD_SHED') ? 0.8 : 1;
+    var shed = 1; // load is shed by under-frequency trips of whole feeders, see below
     var Lpres = presOn ? (135 + 225 * op + 18 * Math.sin(sim.t / 7e5) + noise(4)) * shed : 0;
     var Lpm = pmOn ? (105 + 185 * op + 15 * Math.sin(sim.t / 5e5 + 1) + noise(4)) * shed : 0;
     var Laux = auxOn ? 22 + 10 * (Tamb - 23) / 9 + (on('BESS.HVAC.RUN') ? 6 : 0) + noise(0.6) : 0;
+    if (sim.faults.OVERLOAD) { if (presOn) Lpres += 200; if (pmOn) Lpm += 200; }
     var Lload = Lpres + Lpm + Laux;
 
     /* ---- PV available ---- */
@@ -230,8 +237,9 @@
 
     /* ---- PPC dispatch ---- */
     var soc = get('BESS.SYS.SOC');
-    var chgMax = !bessForming ? 0 : (soc >= C.ppc.socMax ? 0 : soc > ppc.high ? 950 * (C.ppc.socMax - soc) / (C.ppc.socMax - ppc.high) : 950);
-    var disMax = !bessForming ? 0 : (soc <= C.ppc.socMin ? 0 : soc < 15 ? 950 * (soc - C.ppc.socMin) / 5 : 950);
+    var lim = sim.bessLimit, socMax = Math.min(100, ppc.high + 3);
+    var chgMax = !bessForming ? 0 : (soc >= socMax ? 0 : soc > ppc.high ? lim * (socMax - soc) / (socMax - ppc.high) : lim);
+    var disMax = !bessForming ? 0 : (soc <= sim.socMin ? 0 : soc < sim.socMin + 5 ? lim * (soc - sim.socMin) / 5 : lim);
     set('BESS.SYS.P_CHG_MAX', chgMax); set('BESS.SYS.P_DIS_MAX', disMax);
     var losses = 0.012 * (Lload + pvAvail) + (busLive ? 9 : 0);
     var need = Lload + losses;
@@ -242,14 +250,20 @@
       var lead = on('DG.DG1.READY') ? 'DG1' : 'DG2', lag2 = lead === 'DG1' ? 'DG2' : 'DG1';
       if (!bessForming) {
         // BESS unavailable: DGs form the grid
+        // second generator when the load on the running one exceeds 80 % of its rating (design report section 11); stop below 50 %
         sim.dg[lead].request = true;
-        sim.dg[lag2].request = need - pvAvail * 0.5 > C.generators[0].kw * 0.85 || !on('DG.' + lead + '.READY');
+        var leadKw0 = C.generators.filter(function (g) { return g.id === lead; })[0].kw, resid = need - pvAvail;
+        if (resid > 0.8 * leadKw0 || !on('DG.' + lead + '.READY')) sim.dg[lag2].request = true;
+        else if (resid < 0.5 * leadKw0 && sim.dg[lag2].runFor > 600) sim.dg[lag2].request = false;
       } else {
-        if (soc < ppc.start || need - pvAvail > disMax * 0.9) sim.dg[lead].request = true;
-        if (sim.dg[lead].request && need - pvAvail > disMax * 0.9 + 400) sim.dg[lag2].request = true;
+        // EMS sequence (design report section 11): start below the start SOC when PV cannot cover the load,
+        // second generator when load exceeds 80 % of the running one, stop at the stop SOC or when PV covers the load
+        var leadKw = C.generators.filter(function (g) { return g.id === lead; })[0].kw;
+        if ((soc < ppc.start && need > pvAvail) || need - pvAvail > disMax * 0.9) sim.dg[lead].request = true;
+        if (sim.dg[lead].status === 'ONLINE' && need - pvAvail > 0.8 * leadKw) sim.dg[lag2].request = true;
         var minRunOk = sim.dg[lead].runFor > C.ppc.dgMinRunMin * 60 || sim.dg[lead].status !== 'ONLINE';
-        if (soc > ppc.stop && minRunOk && need - pvAvail < disMax * 0.6) { sim.dg[lead].request = false; sim.dg[lag2].request = false; }
-        if (sim.dg[lag2].request && need - pvAvail < disMax * 0.5 && sim.dg[lag2].runFor > 600) sim.dg[lag2].request = false;
+        if ((soc > ppc.stop || pvAvail > need * 1.05) && minRunOk && need - pvAvail < disMax * 0.6) { sim.dg[lead].request = false; sim.dg[lag2].request = false; }
+        if (sim.dg[lag2].request && need - pvAvail < 0.5 * leadKw && sim.dg[lag2].runFor > 600) sim.dg[lag2].request = false;
       }
       var st;
       if (!busLive) st = 0;
@@ -263,7 +277,8 @@
         set('BESS.SYS.CMD_MODE', 1); set('BESS.PCS1.RUN', 1); set('BESS.PCS2.RUN', 1); setCB('BESS.LV_ACB', true); setCB('GIS.AH3', true);
         S.event && S.event('PPC', 'BESS available - PCS synchronised to bus, AH3 closed, BESS resumes grid-forming');
       }
-      if (st === 0 && !sim.seq && !anyBlockingFault()) { sim.blackoutTimer = (sim.blackoutTimer || 0) + dt; if (sim.blackoutTimer > 10) { sim.blackoutTimer = 0; S.startBlackStart(); } }
+      // with the EMS failed there is no black-start sequence: the generator controllers start on the dead busbar by themselves
+      if (st === 0 && !sim.seq && !anyBlockingFault() && !sim.faults.EMS_FAIL) { sim.blackoutTimer = (sim.blackoutTimer || 0) + dt; if (sim.blackoutTimer > 10) { sim.blackoutTimer = 0; S.startBlackStart(); } }
     } else if (on('PPC.CTRL.ESD')) sim.state = 7;
     else if (!auto && !sim.seq) sim.state = busLive ? 8 : 0;
 
@@ -280,7 +295,7 @@
 
     /* DG dispatch */
     var dgCap = dgOnline.reduce(function (a, g) { return a + g.kw; }, 0);
-    var Pdg = 0, Ppv = pvAvail, Pbess = 0, curtail = 0;
+    var Pdg = 0, Ppv = pvAvail, Pbess = 0, curtail = 0, ovl = false;
     if (bessForming) {
       if (dgOnline.length) {
         var chgTarget = Math.min(chgMax, 700);
@@ -288,18 +303,30 @@
       }
       Pbess = need - Ppv - Pdg;
       if (Pbess < -chgMax) { curtail = -chgMax - Pbess; Ppv -= curtail; Pbess = -chgMax; }
-      if (Pbess > disMax) { set('PPC.CTRL.LOAD_SHED', 1); Pbess = disMax; } else if (Pbess < disMax * 0.7) set('PPC.CTRL.LOAD_SHED', 0);
+      if (Pbess > disMax) { ovl = true; set('PPC.CTRL.LOAD_SHED', 1); Pbess = disMax; } else if (Pbess < disMax * 0.7) set('PPC.CTRL.LOAD_SHED', 0);
     } else if (dgOnline.length) {
       Pdg = need - Ppv;
       if (Pdg < dgCap * ppc.dgMin) { curtail = dgCap * ppc.dgMin - Pdg; Ppv -= curtail; Pdg = dgCap * ppc.dgMin; }
-      if (Pdg > dgCap) { set('PPC.CTRL.LOAD_SHED', 1); Pdg = dgCap; } else if (Pdg < dgCap * 0.75) set('PPC.CTRL.LOAD_SHED', 0);
+      if (Pdg > dgCap) { ovl = true; set('PPC.CTRL.LOAD_SHED', 1); Pdg = dgCap; } else if (Pdg < dgCap * 0.75) set('PPC.CTRL.LOAD_SHED', 0);
     } else { Ppv = 0; Pbess = 0; set('PPC.CTRL.LOAD_SHED', 0); }
     Ppv = Math.max(0, Ppv);
+
+    /* under-frequency load shedding by the 11 kV relays (81), design report section 11:
+       AH6 (Prime Minister) at 48.5 Hz after 1 s, then AH4 (President) at 47.5 Hz after 0.5 s; AH5 is never shed */
+    var overload = busLive && ovl;
+    var ufStage = on('GIS.AH6.CB_CLOSED') ? 'AH6' : on('GIS.AH4.CB_CLOSED') ? 'AH4' : null;
+    if (overload && ufStage) {
+      sim.ufTimer += dt;
+      if (sim.ufTimer >= (ufStage === 'AH6' ? 1 : 0.5)) {
+        setCB('GIS.' + ufStage, false); set('GIS.' + ufStage + '.CB_TRIPPED', 1); sim.uf[ufStage] = true; sim.ufTimer = 0;
+        S.event && S.event('PROT', ufStage + (ufStage === 'AH6' ? ' Prime Minister' : ' President') + ' feeder shed by under-frequency protection (81)', 1);
+      }
+    } else sim.ufTimer = 0;
 
     /* ---- write PV ---- */
     var pvScale = pvAvail > 0 ? Ppv / pvAvail : 0;
     var U = busLive ? 11 + noise(0.02) - 0.08 * (Lload / 1200) : 0;
-    var f = busLive ? (bessForming ? 50 - 0.15 * Pbess / 950 : 50 - 0.3 * (Pdg / Math.max(dgCap, 1) - 0.5)) + noise(0.008) : 0;
+    var f = overload ? (on('GIS.AH6.CB_CLOSED') ? 48.3 : 47.3) + noise(0.02) : busLive ? (bessForming ? 50 - 0.15 * Pbess / 950 : 50 - 0.3 * (Pdg / Math.max(dgCap, 1) - 0.5)) + noise(0.008) : 0;
     set('GIS.BUS.U', U); set('GIS.BUS.F', f); set('GIS.BUS.LIVE', busLive ? 1 : 0);
 
     C.pv.inverters.forEach(function (inv, idx) {
@@ -349,7 +376,8 @@
     lag('BESS.SYS.T_CELL_MAX', get('BESS.HVAC.T_CABIN') + 2 + Math.abs(Pbess) / 950 * 6, 0.004 * dt);
     set('BESS.SYS.T_CELL_MIN', get('BESS.SYS.T_CELL_MAX') - 3.1);
     set('BESS.HVAC.HUM', 48 + noise(1));
-    C.bess.pcs.forEach(function (pc) {
+    C.bess.pcs.forEach(function (pc, i) {
+      set('BESS.BCP' + (i + 1) + '.I_DC', bessForming ? Pbess / 2 * 1000 / udc : 0);
       var p = 'BESS.' + pc.id, P = Pbess / 2;
       set(p + '.P', bessForming ? P : 0); set(p + '.Q', bessForming ? 30 : 0);
       set(p + '.U_AC', bessForming ? 690 + noise(2) : 0); set(p + '.I_AC', Math.abs(P) / (SQ3 * 0.69));
@@ -407,7 +435,7 @@
       set(r + '.I_N', I * 0.02);
       set(r + '.VPIS_DX11', busLive && on('GIS.' + (x[0] === 'RMU_PRES' ? 'AH4' : 'AH6') + '.CB_CLOSED') ? 1 : 0);
       set(r + '.VPIS_DX13', x[3] || (on(r + '_AH3.CB_CLOSED') && get(r + '.VPIS_DX11')) ? 1 : 0);
-      set(r + '.UPS_ONBATT', get(r + '.VPIS_DX11') ? 0 : 1);
+      set(x[0] === 'RMU_PRES' ? 'AUX.UPS_RMUP.ON_BATT' : 'AUX.UPS_RMUM.ON_BATT', get(r + '.VPIS_DX11') ? 0 : 1);
       lvWrite(x[2], P, x[3], f);
     });
     lvWrite('AUXPNL', Laux, auxOn, f);
@@ -416,7 +444,7 @@
     /* ---- transformers ---- */
     var txP = { DGTX: Pdg, PVTX: Ppv, BESSTX: Math.abs(Pbess), PRESTX: Lpres, PMTX: Lpm, AUXTX: Laux };
     C.transformers.forEach(function (tx) {
-      var p = 'TX.' + tx.id, ld = txP[tx.id] / 0.92 / tx.kva;
+      var p = 'TX.' + tx.id, ld = txP[tx.id] / ({ PVTX: 0.99, BESSTX: 0.99, DGTX: 0.9 }[tx.id] || 0.92) / tx.kva;
       set(p + '.LOAD', ld * 100);
       lag(p + '.T_OIL', Tamb + 6 + 45 * ld * ld, 0.0015 * dt);
       lag(p + '.T_WDG', get(p + '.T_OIL') + 4 + 18 * ld * ld, 0.01 * dt);
@@ -427,7 +455,6 @@
     set('AUX.UPS_SCADA.AUTONOMY', auxOn ? Math.min(95, get('AUX.UPS_SCADA.AUTONOMY') + dt / 60) : Math.max(0, get('AUX.UPS_SCADA.AUTONOMY') - dt / 60));
     set('AUX.UPS_SCADA.BATT_LOW', get('AUX.UPS_SCADA.AUTONOMY') < 15 ? 1 : 0);
     set('AUX.UPS_SCADA.LOAD', 38 + noise(1));
-    set('AUX.UPS_RMUP.ON_BATT', get('RMU.RMU_PRES.UPS_ONBATT')); set('AUX.UPS_RMUM.ON_BATT', get('RMU.RMU_PM.UPS_ONBATT'));
 
     /* ---- fire ---- */
     if (sim.faults.FIRE_STAGE) {
@@ -461,7 +488,7 @@
     /* comm-loss fault */
     var pmComm = !sim.faults.COMM_PM;
     set('NET.N17.OK', pmComm ? 1 : 0); set('RMU.RMU_PM.COMM', pmComm ? 1 : 0);
-    S.tagOrder.forEach(function (id) { if (id.indexOf('RMU.RMU_PM') === 0 && id !== 'RMU.RMU_PM.COMM') T[id].q = pmComm ? 'GOOD' : 'BAD'; });
+    S.mtagOrder.forEach(function (id) { if ((id.indexOf('RMU.RMU_PM') === 0 || id.indexOf('AUX.UPS_RMUM.') === 0) && id !== 'RMU.RMU_PM.COMM') T[id].q = pmComm ? 'GOOD' : 'BAD'; });
     set('NET.SEC.FW_DENY', 3 + Math.round(Math.abs(noise(2))));
   }
 
@@ -494,6 +521,7 @@
   }
 
   function record() {
+    if (S.recordHook) return S.recordHook();
     var H = sim.history;
     H.t.push(sim.t);
     sim.histIds.forEach(function (id) { H.v[id].push(T[id].v); });
@@ -520,6 +548,17 @@
     }, 1000);
   };
 
+  /* hot standby controller pair (design report section 4): the standby takes over when the active controller fails */
+  S.cpCheck = function () {
+    var cp = sim.cp, other = cp.active === 'A' ? 'B' : 'A';
+    if (!cp[cp.active] && cp[other]) {
+      cp.active = other; cp.pulse = 10;
+      S.event('CP', 'Controller switchover: controller ' + other + ' now in control', 2);
+    }
+    if (!cp.A && !cp.B) S.event('CP', 'Both controllers failed: SCADA view and remote switching lost; operate locally', 1);
+  };
+  S.cpInService = function () { return sim.cp.A || sim.cp.B; };
+
   /* Fault injection for FAT / operator training */
   S.injectFault = function (k) {
     switch (k) {
@@ -537,11 +576,29 @@
       case 'FIRE_PRE': sim.faults.FIRE_STAGE = 1; S.event('FIRE', 'ESS cabin off-gas / smoke pre-alarm', 2); break;
       case 'FIRE_CONF': sim.faults.FIRE_STAGE = 2; break;
       case 'SF6_AH6': set('GIS.AH6.SF6_LOW', 1); S.event('GIS', 'AH6 SF6 gas pressure low', 2); break;
+      case 'ESTOP': set('PPC.CTRL.ESD', 1); sim.estop = true; S.plantESD(); break;
+      case 'ESTOP_RESET': sim.estop = false; set('PPC.CTRL.ESD', 0); S.event('SIM', 'Emergency stop reset locally at the push-button'); break;
+      case 'RELAY_RESET':
+        S.mtagOrder.forEach(function (id) { if (/^(GIS|RMU)\./.test(id) && /\.(PROT_\w+|LOCKOUT_86|CB_TRIPPED)$/.test(id)) T[id].v = 0; });
+        S.event('SIM', 'Protection relays reset locally at the panels'); break;
+      case 'MCCB_NB03': set('PV.INV3.MCCB_ON', 0); set('PV.INV3.MCCB_TRIP', 1); S.event('SIM', 'Inverter NB03 AC MCCB tripped', 2); break;
+      case 'DG_MAN': C.generators.forEach(function (g) { set('DG.' + g.id + '.MODE_AUTO', 0); }); break;
+      case 'EMS_FAIL':
+        sim.faults.EMS_FAIL = !sim.faults.EMS_FAIL;
+        if (sim.faults.EMS_FAIL) { set('BESS.PCS1.RUN', 0); set('BESS.PCS2.RUN', 0); S.event('SIM', 'EMS stopped: battery off, heartbeat lost', 1); }
+        else { S.event('SIM', 'EMS restored'); }
+        break;
+      case 'OVERLOAD': sim.faults.OVERLOAD = !sim.faults.OVERLOAD; S.event('SIM', 'Office load step +400 kW ' + (sim.faults.OVERLOAD ? 'ON' : 'OFF')); break;
+      case 'CP_A_FAIL': case 'CP_B_FAIL':
+        var k2 = k.charAt(3); sim.cp[k2] = !sim.cp[k2];
+        S.event('SIM', 'Controller ' + k2 + (sim.cp[k2] ? ' repaired: rejoins as standby' : ' failed'), sim.cp[k2] ? 0 : 2);
+        S.cpCheck(); break;
       case 'COMM_PM': sim.faults.COMM_PM = !sim.faults.COMM_PM; S.event('NET', 'Fibre link to P.M. RMU ' + (sim.faults.COMM_PM ? 'LOST' : 'restored'), 2); break;
       case 'CLEAR':
-        sim.faults = {};
+        sim.faults = {}; sim.cp.A = true; sim.cp.B = true;
         ['FIRE.FZ_BESS.PRE_ALM', 'FIRE.FZ_BESS.FIRE', 'FIRE.FZ_BESS.REL_PENDING', 'FIRE.FZ_BESS.RELEASED', 'FIRE.FACP.SOUNDERS', 'FIRE.FZ_BESS.VENT_RUN',
-          'BESS.SYS.BMS_FAULT', 'BESS.RACK3.FAULT', 'BESS.SYS.ESD', 'PV.INV3.FAULT', 'PV.INV3.ISO_FLT', 'GIS.AH6.SF6_LOW', 'DG.DG1.FAIL_START', 'DG.DG2.FAIL_START', 'PPC.CTRL.ESD'].forEach(function (id) { set(id, 0); });
+          'BESS.SYS.BMS_FAULT', 'BESS.RACK3.FAULT', 'BESS.SYS.ESD', 'PV.INV3.FAULT', 'PV.INV3.ISO_FLT', 'GIS.AH6.SF6_LOW', 'DG.DG1.FAIL_START', 'DG.DG2.FAIL_START', 'PPC.CTRL.ESD', 'PV.INV3.MCCB_TRIP'].forEach(function (id) { set(id, 0); });
+        set('PV.INV3.MCCB_ON', 1); sim.estop = false;
         set('BESS.PCS1.RUN', 1); set('BESS.PCS2.RUN', 1); setCB('BESS.LV_ACB', true);
         S.event('SIM', 'All injected faults cleared (protection lockouts still require reset)'); break;
     }

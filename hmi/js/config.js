@@ -34,7 +34,7 @@ SCADA.config = {
       { id: 'AH8', usage: 'NECR Feeder',   ql: 'QL18', qf: 'QF18', kind: 'earthing',ct: '1250/1 5P20 15VA; 1250/1 0.5 15VA', zsct: true, spd: true, cable: '3x70mm² Al/XLPE/CSW/SWA/PVC 6.35/11kV', feeds: 'NECR' }
     ],
     breaker: '630A 31.5kA VCB', isolator: '630A 20kA three-position', vpis: 'DXN-12Q', spdType: 'HY5WS-17/50',
-    relay: 'Feeder protection relay - make/model TBC (IEC 61850 MMS + GOOSE, Modbus TCP fallback)'
+    relay: 'Feeder protection relay - make/model TBC (Modbus TCP; IEC 61850 with an added controller module)'
   },
 
   /* ---------------- Transformers ---------------- */
@@ -127,7 +127,7 @@ SCADA.config = {
 
   /* ---------------- PPC defaults ---------------- */
   ppc: {
-    socMin: 10, socDgStart: 25, socDgStop: 80, socHigh: 95, socMax: 98,
+    socMin: 10, socDgStart: 20, socDgStop: 80, socHigh: 95, socMax: 98,
     dgMinLoadPct: 30, dgOptLoadPct: 75, dgMinRunMin: 30, dgCoolDownMin: 5,
     fNom: 50, uNomKv: 11, rampKwS: 50
   }
