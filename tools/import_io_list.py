@@ -10,7 +10,7 @@ import json, os, re, sys
 import openpyxl
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
-SRC = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, 'docs', 'Villa_Somalia_SCADA_Device_and_IO_List_Rev1.xlsx')
+SRC = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, 'docs', 'Villa_Somalia_SCADA_Device_and_IO_List_Rev2.xlsx')
 OUT = sys.argv[2] if len(sys.argv) > 2 else os.path.join(ROOT, 'hmi', 'js', 'iolist.js')
 
 UNIT = {'deg C': '°C', 'kohm': 'kΩ', 'W/m2': 'W/m²', 'deg': '°', '-': '', None: ''}
@@ -31,7 +31,7 @@ for r in wb['IO List'].iter_rows(min_row=2, values_only=True):
         continue
     tag, desc, equip, loc, typ, row, module, mtype, ch, normal, alarm, opby, note = (list(r) + [None] * 13)[:13]
     t = {'id': tag, 'desc': desc, 'equip': equip, 'loc': loc, 'type': typ, 'src': 'HW',
-         'addr': 'Row %s · %s ch %s' % (row, module, ch), 'row': row, 'normal': normal, 'opby': opby or '-', 'note': note or ''}
+         'addr': ('%s · %s (%s) ch %s' % (row, module, mtype, ch)) if isinstance(row, str) else ('Row %s · %s ch %s' % (row, module, ch)), 'row': row, 'normal': normal, 'opby': opby or '-', 'note': note or ''}
     level = lvl(alarm)
     if typ == 'DI' and level:
         t['alarm'] = {'level': level, 'on': 0 if normal == 'Normally closed' else 1}

@@ -20,7 +20,7 @@
     if (S.events.length > 2000) S.events.length = 2000;
   };
 
-  /* interlocks the CP-8050 checks before closing a model breaker (also used by the black-start sequence) */
+  /* interlocks the controllers check before closing a model breaker (also used by the black-start sequence) */
   S.closeInterlocks = function (p) {
     var f = [];
     if (M[p + '.ES_EARTHED'] && on(p + '.ES_EARTHED')) f.push('Earth switch closed');

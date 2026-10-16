@@ -18,8 +18,8 @@ const SCREENS = [
   ['E06_generators', 'Generators', 'DG1 550 kVA and DG2 660 kVA: state, electrical and engine values, fuel level hardwired and from the controller, running hours and starts. Start and stop work in manual mode only; changing the mode needs the Admin role.'],
   ['E07_energy_management', 'Energy management', 'EMS state and mode, the power balance, the operating modes with the current one highlighted, and the Admin settings: generator start below 20 % and stop at 80 % state of charge. Also the fallback if the EMS fails and the load-shedding order.'],
   ['E08_auxiliaries', 'Auxiliaries', 'Auxiliary transformer and LV board, the SCADA UPS, DC supplies, switchroom conditions, emergency stops and doors. Emergency stops are hardwired; the SCADA only shows them.'],
-  ['E09_communication_status', 'Communication status', 'Live health of every link: the hot standby controller pair with its active and standby roles, both core switches, the fibre ring and field switches, field devices and the six I/O rows, with the protocol of each link.'],
-  ['E10_IO_list', 'I/O list', 'Every signal of the device and I/O list (Attachment B) with its tag, I/O row, module and channel or protocol source, alarm level and live value, with filters and export.'],
+  ['E09_communication_status', 'Communication status', 'Live health of every link: the M580 hot standby controller pair with its active and standby roles, both core switches, the fibre ring and field switches, field devices, the switchroom remote drop and the four Edge I/O islands, with the protocol of each link.'],
+  ['E10_IO_list', 'I/O list', 'Every signal of the device and I/O list (Attachment B) with its tag, I/O location, Schneider module and channel or protocol source, alarm level and live value, with filters and export.'],
   ['E11_overview_during_battery_fire', 'Plant overview during a battery fire', 'The fire panel has tripped the battery by its hardwired circuit. The generators have started, the busbar has been restored with AH8 closed first, and both offices are supplied again; PV runs limited to keep the generators above minimum load.'],
   ['E12_alarms_during_battery_fire', 'Alarm list during a battery fire', 'The alarms raised by the fire, with level, time, tag, equipment and state. Each alarm is acknowledged singly or all at once; fire alarms clear only when reset at the fire panel.'],
 ];
@@ -38,13 +38,13 @@ table { border-collapse: collapse; font-size: 10pt; margin-top: 4mm; } td { padd
 
 let html = `<html><head><meta charset="utf-8"><style>${css}</style></head><body><section>
 <h1>Attachment E · HMI screen mock-ups</h1>
-<div class="sub">Solarization of Villa Somalia · SCADA Design Report Rev 1 · Blueflag Energy · drawing set BFE/PR/26/01</div>
-<p class="note">These screens are mock-ups from the HMI demonstration, running on a simulator of the plant mapped onto every signal of the device and I/O list (Attachment B). They are submitted for approval of layout and content. The final screens are built in SICAM SCC to the same layout and content before the factory test.</p>
+<div class="sub">Solarization of Villa Somalia · SCADA Design Report Rev 2 · Blueflag Energy · drawing set BFE/PR/26/01</div>
+<p class="note">These screens are mock-ups from the HMI demonstration, running on a simulator of the plant mapped onto every signal of the device and I/O list (Attachment B). They are submitted for approval of layout and content. The final screens are built in EcoStruxure Machine SCADA Expert to the same layout and content before the factory test.</p>
 <p>Conventions: breaker closed red and open green, as on the screens already used on site; live conductors dark blue, dead grey; alarm levels 1 red, 2 orange and 3 yellow; values from a device that has stopped communicating shown as ### in magenta, never as live. Every command opens a confirmation step, and controls a user may not operate are disabled for that role.</p>
 <table>${SCREENS.map((s, i) => `<tr><td>E.${i + 1}</td><td>${s[1]}</td></tr>`).join('')}</table></section>`;
 SCREENS.forEach((s, i) => {
   const img = 'data:image/png;base64,' + fs.readFileSync(path.join(dir, s[0] + '.png')).toString('base64');
-  html += `<section><h2>E.${i + 1} ${s[1]}</h2><p>${s[2]}</p><div class="img"><img src="${img}"></div><div class="foot">Mock-up from the HMI demonstration · Attachment E to the SCADA Design Report Rev 1</div></section>`;
+  html += `<section><h2>E.${i + 1} ${s[1]}</h2><p>${s[2]}</p><div class="img"><img src="${img}"></div><div class="foot">Mock-up from the HMI demonstration · Attachment E to the SCADA Design Report Rev 2</div></section>`;
 });
 html += '</body></html>';
 

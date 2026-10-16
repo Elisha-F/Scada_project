@@ -13,7 +13,7 @@
   S.screens.sw11 = {
     title: '11 kV switchboard',
     render: function () {
-      var h = '<h2 class="scr-t">11 kV switchboard (GIS combiner panel) <small>relays over IEC 61850 / Modbus TCP · positions and alarms hardwired to I/O row 1</small>' +
+      var h = '<h2 class="scr-t">11 kV switchboard (GIS combiner panel) <small>relays over Modbus TCP · positions and alarms hardwired to the switchroom I/O drop</small>' +
         '<span style="margin-left:auto">Bus <b data-tag="EMS-U-BUS"></b> · <b data-tag="EMS-F-BUS"></b></span></h2><div class="panelrow">';
       C.gis.panels.forEach(function (p) {
         var k = p.id;
@@ -70,7 +70,7 @@
 
   function stationScreen(k, name, ah) {
     var p = k + '-';
-    return '<h2 class="scr-t">' + name + ' office transformer station <small>' + ah + ' → RMU (ST260E over Modbus RTU via MGate) → 630 kVA → LVDB (PM5560 over Modbus TCP) · hardwired to I/O row ' + (k === 'PRS' ? 3 : 4) + ' by fibre</small></h2>' +
+    return '<h2 class="scr-t">' + name + ' office transformer station <small>' + ah + ' → RMU (ST260E over Modbus RTU via the island serial master) → 630 kVA → LVDB (PM5560 over Modbus TCP) · hardwired to the station Edge I/O island on the fibre ring</small></h2>' +
       ui.card('Single line', stationSvg(k, name, ah)) + '<div style="height:12px"></div><div class="grid g4">' +
       ui.card('RMU', ui.lamp(p + 'CB-TRIP', 'Transformer breaker tripped') + ui.lamp(p + 'FPI', 'Fault passage indicator') + ui.lamp(p + 'GAS-LOW', 'Gas pressure low') + ui.lamp(p + 'LR-REM', 'Remote') +
         ui.lamp(p + 'RLY-HEALTHY', 'ST260E healthy') + ui.lamp(p + 'RLY-TRIP-50', 'Overcurrent trip') + ui.lamp(p + 'RLY-TRIP-50N', 'Earth fault trip') +
@@ -85,7 +85,7 @@
         ui.kv('THD U', p + 'LV-THD-U') + ui.kv('THD I', p + 'LV-THD-I') + ui.kv('Energy', p + 'LV-E-P') +
         '<div class="btnrow">' + ui.btn('OPEN', p + 'LV-INC-OPEN-CMD', 'b-green') + ui.btn('CLOSE', p + 'LV-INC-CLOSE-CMD', 'b-red') + '</div>') +
       ui.card('Station supplies', ui.lamp(p + 'UPS-ON-BATT', 'RMU UPS on battery') + ui.lamp(p + 'UPS-FLT', 'RMU UPS fault') + ui.lamp(p + 'PNL-SUP-OK', 'I/O panel supply healthy') +
-        ui.lamp('CP-ROW' + (k === 'PRS' ? 3 : 4) + '-OK', 'I/O row link healthy') + ui.lamp('SW-' + k + '-HEALTHY', 'Station switch healthy')) +
+        ui.lamp('CP-IO-' + k + '-OK', 'Edge I/O island link healthy') + ui.lamp('SW-' + k + '-HEALTHY', 'Station switch healthy')) +
       '</div>';
   }
   S.screens.prs = { title: 'President station', render: function () { return stationScreen('PRS', 'President', 'AH4'); } };

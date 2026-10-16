@@ -21,7 +21,7 @@
   S.screens.aux = {
     title: 'Auxiliaries',
     render: function () {
-      return '<h2 class="scr-t">Auxiliaries <small>auxiliary transformer, LV board, UPS, DC supplies, switchroom, emergency stops and doors · I/O row 2</small></h2>' +
+      return '<h2 class="scr-t">Auxiliaries <small>auxiliary transformer, LV board, UPS, DC supplies, switchroom, emergency stops and doors · switchroom I/O drop</small></h2>' +
         ui.card('Auxiliary supply', auxSvg()) + '<div style="height:12px"></div><div class="grid g4">' +
         ui.card('Auxiliary transformer 100 kVA', ui.lamp('T-AUX-FUSE', 'HV fuse blown') + ui.lamp('T-AUX-OT-ALM', 'Oil temperature alarm') + ui.lamp('T-AUX-OT-TRIP', 'Oil temperature trip') +
           ui.lamp('T-AUX-WT-ALM', 'Winding temperature alarm') + ui.lamp('T-AUX-WT-TRIP', 'Winding temperature trip') + ui.lamp('T-AUX-PRD', 'Pressure relief operated') + ui.lamp('T-AUX-OL-LOW', 'Oil level low')) +

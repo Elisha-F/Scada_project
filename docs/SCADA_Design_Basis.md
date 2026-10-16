@@ -2,7 +2,7 @@
 
 **Project:** Solarization Villa Somalia · **Client:** Ministry of Energy & Water Resources – Somalia
 **Contractor:** Blueflag Energy Co. Ltd · **Drawing set analysed:** BFE/PR/26/01 (`VILLA_SOMALIA_05_10_2026.pdf`, 25 sheets)
-**Status:** HMI V2.0 – aligned with *Villa Somalia SCADA Design Report* Rev 1 and *Device and I/O List* Rev 1 (Blueflag). Where this note and the design report differ, the design report governs.
+**Status:** HMI V3.0 – aligned with *Villa Somalia SCADA Design Report* Rev 2 and *Device and I/O List* Rev 2 (Blueflag), Schneider Electric platform. Rev 1 (Siemens SICAM A8000) is superseded. Where this note and the design report differ, the design report governs.
 
 ---
 
@@ -36,19 +36,19 @@
 
 | # | Client requirement | Answer | Status |
 |---|---|---|---|
-| 1 | Complete SCADA design aligned with BESS and PV, GIS combiner, LVDBs, generators | Design report Rev 1 + the HMI in `hmi/` (17 screens: overview, 11 kV switchboard, President and PM stations, PV, battery, generators, energy management, auxiliaries, alarms, event log, trends, reports, communication status, I/O list, users, simulation) | **Done** |
-| 2 | Complete I/O list – all analogue and digital signals: VCBs, GIS relays, transformers, RMUs, DGs, combiner panels, weather station, UPS, aux power, fire | `docs/Villa_Somalia_SCADA_Device_and_IO_List_Rev1.xlsx`: **244 hardwired points** (208 DI, 32 DO, 4 AI) on six SICAM I/O rows with module and channel, and **463 communication points** (440 read, 23 write) with a tag per point on the *Comms Point List* sheet. The HMI loads the same 707 tags (`tools/import_io_list.py`) | **Done** – register addresses to be filled from vendor maps |
+| 1 | Complete SCADA design aligned with BESS and PV, GIS combiner, LVDBs, generators | Design report Rev 2 + the HMI in `hmi/` (17 screens: overview, 11 kV switchboard, President and PM stations, PV, battery, generators, energy management, auxiliaries, alarms, event log, trends, reports, communication status, I/O list, users, simulation) | **Done** |
+| 2 | Complete I/O list – all analogue and digital signals: VCBs, GIS relays, transformers, RMUs, DGs, combiner panels, weather station, UPS, aux power, fire | `docs/Villa_Somalia_SCADA_Device_and_IO_List_Rev2.xlsx`: **244 hardwired points** (208 DI, 32 DO, 4 AI) at five I/O locations with Schneider module and channel, and **462 communication points** (439 read, 23 write) with a tag per point on the *Comms Point List* sheet. The HMI loads the same 706 tags (`tools/import_io_list.py`) | **Done** – register addresses to be filled from vendor maps |
 | 3 | Communication architecture, protocols, topology, cybersecurity | Design report sections 7–9; *SYSTEM → Communication status* screen; §4 below | **Done** – for approval |
 | 4 | Data sheets for controllers, field devices, servers, HMI; operational sequence | Design report sections 5–6 (equipment and EMS rules) and §5–6 below | Sequences **done**; vendor data sheets to be attached |
 
-### Point count (I/O list Rev 1)
+### Point count (I/O list Rev 2)
 
 | | DI | DO | AI | AO / write | Total |
 |---|---:|---:|---:|---:|---:|
-| Hardwired (SICAM I/O rows 1–6, 27 % spare overall) | 208 | 32 | 4 | – | 244 |
-| Communication (read) | | | | | 440 |
+| Hardwired (switchroom drop and four Edge I/O islands, 32 % spare overall) | 208 | 32 | 4 | – | 244 |
+| Communication (read) | | | | | 439 |
 | Communication (write: commands and setpoints) | | | | | 23 |
-| **Total** | | | | | **707** |
+| **Total** | | | | | **706** |
 
 The HMI *SYSTEM → I/O list* screen shows every point with its row, module and channel (hardwired) or protocol source (communication), its alarm level and its live value.
 
@@ -80,20 +80,22 @@ The HMI *SYSTEM → I/O list* screen shows every point with its row, module and 
 
 As in design report section 7:
 
-* **Controller:** two Siemens SICAM A8000 **CP-8050** in **hot standby** (A active, B standby) in the 11 kV switchroom SCADA cabinet, acting as plant controller and gateway. Each has two power supplies and connects to both core switches; both talk to the SCADA servers by **IEC 60870-5-104**. I/O row 1 has its own CI-8532 interface instead of sitting on the controller backplane, so both controllers reach every I/O row. If A fails, B takes over and the SCADA view and remote switching continue. Siemens is to confirm the redundancy function, switchover time and the I/O row connection (design report open point 12).
-* **SCADA:** SICAM SCC on **two servers (A active, B hot standby)**, one operator workstation, one engineering laptop.
-* **Network:** two core switches (Moxa EDS-G512E); single-mode **fibre ring** through the field switches SW-MV (inverter station), SW-BESS, SW-GEN, SW-PRS and SW-PMS; firewall with VPN for remote support (off by default); GPS time server (NTP).
-* **Hardwired I/O:** six SICAM I/O rows. Rows 1 and 2 (SCADA cabinet, CI-8532 on copper) are local; rows 3–6 (President station, PM station, BESS yard, generators) are on dedicated fibre pairs.
-* **Field devices:** 11 kV relays AH1–AH7 by IEC 61850 or Modbus TCP; PV inverters by **power line communication to the PLC box**, then Modbus TCP; battery data **through the EMS**; generator controllers by Modbus; RMU relays ST260E by Modbus RTU through MGate gateways; LVDB meters PM5560; weather station on the blue'Log XM (weather station only); UPS by SNMP / Modbus.
+* **Controllers:** two Schneider Electric **Modicon M580** hot standby CPUs (BMEH582040; A active, B standby) in the 11 kV switchroom SCADA cabinet, acting as plant controller and gateway. Each CPU sits in its own rack with two power supplies and two Ethernet modules (device network, and control network with IP forwarding), and connects to both core switches. If A fails, B takes over and the SCADA view and remote switching continue. Schneider is to confirm the switchover time (design report open point 12).
+* **SCADA:** EcoStruxure Machine SCADA Expert on **two SCADA stations (A active, B hot standby)**, which are also the operator stations, and one engineering laptop with EcoStruxure Control Expert. SCADA redundancy, historian and retention to be confirmed by Schneider (open point 19).
+* **Network:** two core switches and five field and station switches (Modicon managed switches with SFP fibre ports, references to select); single-mode **fibre ring** through SW-MV (inverter station), SW-BESS, SW-GEN, SW-PRS and SW-PMS; firewall with VPN for remote support (off by default); GPS time server (NTP).
+* **Hardwired I/O:** five I/O locations. A **Modicon X80 remote drop** in the switchroom on the M580 Ethernet remote I/O network, and **Modicon Edge I/O NTS islands** at the President and Prime Minister stations, the BESS yard and the generator area, on the fibre ring by EtherNet/IP. Both controllers reach every location; no I/O sits in the CPU racks. Field contacts are wetted at 24 V DC; the 32 commands drive interposing relays in the 110 V DC control circuits.
+* **Field devices:** 11 kV relays AH1–AH7 by Modbus TCP (IEC 61850 would need an added controller module); PV inverters by **power line communication to the PLC box**, then Modbus TCP; battery data **through the EMS**; generator controllers by Modbus; RMU relays ST260E by Modbus RTU through the Edge I/O serial masters at the stations; LVDB meters PM5560; weather station on the blue'Log XM (weather station only); UPS by SNMP / Modbus.
 
 | Link | Protocol | Medium |
 |---|---|---|
-| CP-8050 → SCADA servers A/B | IEC 60870-5-104 | Ethernet, both core switches |
-| CP-8050 → 11 kV relays | IEC 61850 / Modbus TCP | Ethernet |
+| Controllers → SCADA stations A/B | Modbus TCP | Ethernet, both core switches |
+| Controller A ↔ controller B | M580 hot standby link | Dedicated link between the CPUs |
+| Controllers → switchroom I/O drop | M580 Ethernet remote I/O | Copper, in the cabinet |
+| Controllers → Edge I/O islands | EtherNet/IP | Fibre ring |
+| Controllers → 11 kV relays | Modbus TCP | Ethernet |
 | PV inverters → PLC box | Power line communication | AC cables |
-| CP-8050 → PLC box, EMS, generator controllers, meters, weather logger | Modbus TCP | Fibre ring |
-| CP-8050 → ST260E | Modbus RTU via MGate | RS485 + fibre ring |
-| CP-8050 → I/O rows 3–6 | SICAM I/O link, optical | Fibre pair |
+| Controllers → PLC box, EMS, generator controllers, meters, weather logger | Modbus TCP | Fibre ring |
+| Controllers → ST260E | Modbus RTU via the Edge I/O serial master | RS485 + fibre ring |
 | Network devices → SCADA | SNMP v3, syslog | Ethernet |
 
 **Cybersecurity** (design report section 9): firewall between plant and outside networks; remote access only by VPN, enabled per session by an Admin and logged; individual accounts with two roles; password and lockout rules; unused ports disabled; time-synchronised logs; configuration backups.
@@ -102,7 +104,7 @@ As in design report section 7:
 
 ## 5. Operating rules (embedded EMS)
 
-The battery EMS dispatches the plant; the CP-8050 and SCADA monitor it and pass Admin setpoints. Rules in the HMI simulator (`hmi/js/sim.js`) follow design report section 6:
+The battery EMS dispatches the plant; the M580 controllers and SCADA monitor it and pass Admin setpoints. Rules in the HMI simulator (`hmi/js/sim.js`) follow design report section 6:
 
 1. **Day, PV surplus:** battery forms the grid and charges; PV curtailed when the battery is full.
 2. **Day, PV shortfall / night:** battery forms the grid and discharges.
@@ -118,10 +120,10 @@ The battery EMS dispatches the plant; the CP-8050 and SCADA monitor it and pass 
 
 With no separate plant controller, the EMS supplier must provide, and the commissioning tests must show:
 
-* **Generator start and stop:** by a hardwired start contact from the EMS to each generator controller (Modbus as a duplicate), independent of the CP-8050, SCADA and network.
+* **Generator start and stop:** by a hardwired start contact from the EMS to each generator controller (Modbus as a duplicate), independent of the controllers, SCADA and network.
 * **PV curtailment:** EMS limits the inverters through the PLC box when the battery is full or a generator would fall below minimum load, ramping down rather than tripping; response time stated by the supplier.
 * **Black start:** written sequence (AH8 first), each step marked automatic or by operator command.
-* **EMS failure:** the CP-8050 raises a level 1 alarm when the EMS heartbeat stops; the generator controllers start on a dead busbar by themselves and form the grid; the battery stays off until the EMS is restored.
+* **EMS failure:** the controllers raise a level 1 alarm when the EMS heartbeat stops; the generator controllers start on a dead busbar by themselves and form the grid; the battery stays off until the EMS is restored.
 * **Load shedding:** under-frequency (81) in the 11 kV relays: AH6 at 48.5 Hz / 1 s, then AH4 at 47.5 Hz / 0.5 s (to be confirmed by the protection study); AH5 never shed; feeders reclosed by the Operator.
 
 The simulator demonstrates the last two (SYSTEM → Simulation: *EMS stops*, *Office load step*). Open points 16–18 in the design report ask the EMS supplier, generator supplier and protection engineer to confirm them.
@@ -129,14 +131,14 @@ The simulator demonstrates the last two (SYSTEM → Simulation: *EMS stops*, *Of
 
 ## 6. Data-sheet register
 
-Per design report section 5 and the *Device List* sheet: SICAM A8000 CP-8050 and I/O modules (DI-8112, DO-8221, DO-8212, AI-8320, CI-8532/8533), SICAM SCC servers, Moxa EDS-G512E and field switches, MGate gateways, Schneider PM5560 meters, Siemens SITOP PSU8200, firewall, GPS time server, UPS; vendor data for the 11 kV relays, ST260E, Sungrow SG350HX and PLC box, Sungrow ST3340UX and EMS, generator controllers and the blue'Log XM. Register maps are needed from Sungrow (inverters, EMS), the generator controller vendor and Strom (ST260E) to fill the communication addresses.
+Per design report section 13 and the *Device List* sheet: Schneider Electric Modicon M580 (BMEH582040, BMENOC0311, BMENOC0321), Modicon X80 (BMEXBP0602, BMEXBP1200, BMECRA31210, BMXCPS3020, BMXDDI3202K, BMXDDO3202K, BMXAMI0410, BMXNOM0200), Modicon Edge I/O NTS (NTSNEC1200K, NTSPFB1002HK, NTSDDI1602XK, NTSDDO1602K, NTSFMB0120K, analogue input), EcoStruxure Machine SCADA Expert and Control Expert, industrial panel PCs, Modicon managed switches, PM5560 meters, Phaseo supplies, Zelio interposing relays, Spacial and Thalassa enclosures, APC UPS; firewall and GPS time server from other makers; vendor data for the 11 kV relays, ST260E, Sungrow SG350HX and PLC box, Sungrow ST3340UX and EMS, generator controllers and the blue'Log XM. References marked *to select* come from the Schneider requote (`docs/Villa_Somalia_IO_Allocation_Schneider_Requote.xlsx`). Register maps are needed from Sungrow (inverters, EMS), the generator controller vendor and Strom (ST260E) to fill the communication addresses.
 
 ---
 
 ## 7. HMI design notes
 
 * Muted background; colour is used for state and alarms. Breaker convention **red = closed, green = open**, as on the DHYBRID screens already used on site. Live conductors dark blue, dead grey.
-* **Every tag name on the screens is the tag in I/O list Rev 1** (for example `AH1-CB-CLSD`, `BESS-SOC`, `EMS-GEN-START-SP`); hovering a signal shows its tag.
+* **Every tag name on the screens is the tag in I/O list Rev 2** (for example `AH1-CB-CLSD`, `BESS-SOC`, `EMS-GEN-START-SP`); hovering a signal shows its tag.
 * Every value carries a quality flag: bad or stale data shows `###` in magenta (demonstrated by cutting the fibre to the PM station).
 * **Three alarm levels** (1 critical, 2 major, 3 minor) taken from the I/O list; alarm banner, acknowledge per alarm or all, cleared-unacknowledged state, event log with the user who acted.
 * **Two roles:** Operator (view, acknowledge, switch breakers, start/stop generators in manual, reset level 3 faults) and Admin (all of that plus EMS mode and setpoints, C-rate limit, generator mode, inverter commands, users, VPN, exports).

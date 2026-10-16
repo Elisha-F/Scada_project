@@ -2,7 +2,7 @@
  * Plant simulator + Power Plant Controller (PPC) logic.
  *
  * The HMI is data-source agnostic: screens only read/write SCADA.tags.
- * In production this module is replaced by the driver layer (IEC 61850 / Modbus
+ * In production this module is replaced by the driver layer (Modbus TCP / EtherNet/IP
  * gateway publishing over WebSocket). For FAT/training it simulates the
  * islanded Villa Somalia microgrid so every screen, alarm and sequence can be
  * demonstrated.

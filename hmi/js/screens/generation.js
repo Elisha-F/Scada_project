@@ -7,7 +7,7 @@
   S.screens.pv = {
     title: 'PV system',
     render: function () {
-      var h = '<h2 class="scr-t">PV system <small>1,516 kWp · 4 × Sungrow SG350HX · power line communication to the PLC box, Modbus TCP to the CP-8050</small></h2><div class="grid g4" style="margin-bottom:12px">' +
+      var h = '<h2 class="scr-t">PV system <small>1,516 kWp · 4 × Sungrow SG350HX · power line communication to the PLC box, Modbus TCP to the M580 controllers</small></h2><div class="grid g4" style="margin-bottom:12px">' +
         ui.card('PV plant', ui.kv('PV power (EMS)', 'EMS-P-PV') + '<div class="kv"><span class="k">Energy today, 4 inverters</span><span class="v" id="pv-eday"></span></div>' +
           '<div class="kv"><span class="k">Performance ratio</span><span class="v" id="pv-pr"></span></div>' + ui.lamp('EMS-PV-CURT', 'Curtailed by the EMS') +
           '<p class="note">Energy today and performance ratio are calculated on the SCADA from listed signals.</p>', 'dark') +
@@ -43,7 +43,7 @@
     title: 'Battery',
     render: function () {
       var b = 'BESS-';
-      return '<h2 class="scr-t">Battery energy storage <small>Sungrow ST3340UX · 3,340 kWh · read through the EMS over Modbus TCP · safety contacts hardwired to I/O row 5</small></h2><div class="grid g3">' +
+      return '<h2 class="scr-t">Battery energy storage <small>Sungrow ST3340UX · 3,340 kWh · read through the EMS over Modbus TCP · safety contacts hardwired to the BESS yard I/O island</small></h2><div class="grid g3">' +
         ui.card('State', '<svg viewBox="0 0 300 150" style="width:100%;height:150px">' + ui.battery(20, 20, 70, 120) + ui.text(110, 30, 'State of charge', 'lbl-xs', 'start') + ui.val(110, 50, b + 'SOC', 'val-b') +
           ui.text(110, 75, 'Active power (+dis / −chg)', 'lbl-xs', 'start') + ui.val(110, 93, b + 'P', 'val-b') + ui.text(110, 118, 'Converter', 'lbl-xs', 'start') + ui.val(110, 136, b + 'PCS-STATE', 'val-b') + '</svg>' +
           ui.kv('State of health', b + 'SOH') + ui.kv('Reactive power', b + 'Q') + ui.kv('DC voltage', b + 'U-DC') + ui.kv('DC current', b + 'I-DC') + ui.kv('Charge power limit', b + 'P-CHG-LIM') +
@@ -65,7 +65,7 @@
   S.screens.gen = {
     title: 'Generators',
     render: function () {
-      var h = '<h2 class="scr-t">Diesel generators <small>controllers over Modbus · breaker, running, alarm, E-stop and fuel level also hardwired to I/O row 6</small></h2><div class="grid g-side"><div class="grid g2">';
+      var h = '<h2 class="scr-t">Diesel generators <small>controllers over Modbus · breaker, running, alarm, E-stop and fuel level also hardwired to the generator area I/O island</small></h2><div class="grid g-side"><div class="grid g2">';
       C.generators.forEach(function (g) {
         var k = g.id + '-';
         h += ui.card(g.name + ' · ' + g.kva + ' kVA', '<div class="statebox" id="st-' + g.id + '"><div class="st" data-s="0">STOPPED</div><div class="st" data-s="1">RUNNING, OFF LOAD</div><div class="st" data-s="2">ON LOAD</div></div>' +
@@ -113,7 +113,7 @@
           '<div class="btnrow">' + ui.btn('RESET LEVEL 3 FAULTS', 'EMS-RESET-L3-CMD', 'b-gray') + ui.btn('RESET LEVEL 1 AND 2 FAULTS', 'EMS-RESET-L12-CMD', 'b-gray') + '</div>') +
         ui.card('Settings (Admin)', sp.map(function (x) {
           return '<div class="kv"><span class="k">' + x[1] + '</span><span><span class="v" data-tag="' + x[0] + '"></span> ' + ui.btn('✎', x[0], 'b-small b-blue') + '</span></div>';
-        }).join('') + '<p class="note">Proposed starting values, to be set with the EMS supplier at commissioning. Only the CP-8050 writes settings to the EMS.</p><h4>If the EMS fails</h4><p class="note">The CP-8050 raises a level 1 alarm when the EMS heartbeat stops. The generators start on the dead busbar by themselves and supply the plant; the battery stays off. EMS heartbeat: <b data-tag="EMS-HEARTBEAT"></b></p><h4>Load shedding</h4><p class="note">On overload the 11 kV relays shed by under-frequency (81): AH6 at 48.5 Hz after 1 s, then AH4 at 47.5 Hz after 0.5 s. AH5 is never shed. The Operator recloses once frequency is stable.</p>') +
+        }).join('') + '<p class="note">Proposed starting values, to be set with the EMS supplier at commissioning. Only the controllers write settings to the EMS.</p><h4>If the EMS fails</h4><p class="note">The controllers raise a level 1 alarm when the EMS heartbeat stops. The generators start on the dead busbar by themselves and supply the plant; the battery stays off. EMS heartbeat: <b data-tag="EMS-HEARTBEAT"></b></p><h4>Load shedding</h4><p class="note">On overload the 11 kV relays shed by under-frequency (81): AH6 at 48.5 Hz after 1 s, then AH4 at 47.5 Hz after 0.5 s. AH5 is never shed. The Operator recloses once frequency is stable.</p>') +
         '</div><div style="height:12px"></div>' +
         ui.card('Operating modes', '<table class="tbl" id="modes"><tr><th>Mode</th><th>Battery</th><th>PV</th><th>Generators</th></tr>' + MODES.map(function (m, i) {
           return '<tr data-m="' + i + '">' + m.map(function (c) { return '<td>' + c + '</td>'; }).join('') + '</tr>';

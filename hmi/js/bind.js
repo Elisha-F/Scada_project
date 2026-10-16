@@ -1,7 +1,7 @@
 /*
  * Binding between the plant simulator model (S.mtags) and the submitted tags (S.tags).
  *
- * In service this file is replaced by the CP-8050 / SICAM SCC data path: every
+ * In service this file is replaced by the M580 controllers / Machine SCADA Expert data path: every
  * submitted tag then comes from its I/O channel or communication point. Here each
  * tag is computed from the simulator once per scan, and each command tag is routed
  * to the simulator with the interlocks the controller will enforce.
@@ -89,7 +89,7 @@
   A('PV-ACB-CLSD', function () { return m('PV.LV_ACB.CB_CLOSED'); });
   A('PV-ACB-TRIP', function () { return m('PV.LV_ACB.CB_TRIPPED'); });
   BRK('PV-ACB', { title: 'PV main LV breaker (ACB 1250 A)', model: 'PV.LV_ACB', clsd: 'PV-ACB-CLSD', trip: 'PV-ACB-TRIP', status: ['PV-ACB-CLSD', 'PV-ACB-TRIP'],
-    note: 'Position and trip are hardwired to I/O row 5; the breaker is operated locally.' });
+    note: 'Position and trip are hardwired to the BESS yard I/O island; the breaker is operated locally.' });
   C.pv.inverters.forEach(function (inv) {
     var k = inv.tag, p = 'PV.' + inv.id;
     A(k + '-MCCB-TRIP', function () { return m(p + '.MCCB_TRIP'); });
@@ -124,7 +124,7 @@
   A('BESS-ACB-CLSD', function () { return m('BESS.LV_ACB.CB_CLOSED'); });
   A('BESS-ACB-TRIP', function () { return m('BESS.LV_ACB.CB_TRIPPED'); });
   BRK('BESS-ACB', { title: 'Battery main LV breaker (ACB 1000 A)', model: 'BESS.LV_ACB', clsd: 'BESS-ACB-CLSD', trip: 'BESS-ACB-TRIP', status: ['BESS-ACB-CLSD', 'BESS-ACB-TRIP'],
-    note: 'Position and trip are hardwired to I/O row 5; the breaker is operated locally.' });
+    note: 'Position and trip are hardwired to the BESS yard I/O island; the breaker is operated locally.' });
   var bs = 'BESS.SYS.';
   [['SOC', 'SOC'], ['SOH', 'SOH'], ['U-DC', 'U_DC'], ['I-DC', 'I_DC'], ['P', 'P'], ['Q', 'Q'], ['U-CELL-MAX', 'U_CELL_MAX'], ['U-CELL-MIN', 'U_CELL_MIN'],
     ['T-CELL-MAX', 'T_CELL_MAX'], ['T-CELL-MIN', 'T_CELL_MIN'], ['P-CHG-LIM', 'P_CHG_MAX'], ['P-DIS-LIM', 'P_DIS_MAX'], ['E-CHG', 'E_CHG'], ['E-DIS', 'E_DIS']].forEach(function (x) {
@@ -176,7 +176,7 @@
   A('GEN-ACB-CLSD', function () { return m('DG.TX_LV.CB_CLOSED'); });
   A('GEN-ACB-TRIP', function () { return m('DG.TX_LV.CB_TRIPPED'); });
   BRK('GEN-ACB', { title: 'DG step-up transformer LV breaker', model: 'DG.TX_LV', clsd: 'GEN-ACB-CLSD', trip: 'GEN-ACB-TRIP', status: ['GEN-ACB-CLSD', 'GEN-ACB-TRIP'],
-    note: 'Position and trip are hardwired to I/O row 6; the breaker is operated locally.' });
+    note: 'Position and trip are hardwired to the generator area I/O island; the breaker is operated locally.' });
   C.generators.forEach(function (g) {
     var k = g.id, p = 'DG.' + k;
     A(k + '-GCB-CLSD', function () { return m(p + '_ACB.CB_CLOSED'); });
@@ -339,8 +339,8 @@
   });
   A('CP-REDUN-OK', function () { return b(cp.A && cp.B); });
   A('CP-SWITCHOVER', function () { return b(cp.pulse > 0); });
-  [1, 2, 3, 5, 6].forEach(function (n) { A('CP-ROW' + n + '-OK', function () { return 1; }); });
-  A('CP-ROW4-OK', function () { return b(pmLink()); });
+  ['SWR', 'PRS', 'YRD', 'GEN'].forEach(function (n) { A('CP-IO-' + n + '-OK', function () { return 1; }); });
+  A('CP-IO-PMS-OK', function () { return b(pmLink()); });
   for (var l = 1; l <= 8; l++) A('CP-LINK' + l + '-OK', function () { return 1; });
   A('SYS-CP-HEALTHY', function () { return b(cp.A || cp.B); }); // watchdog output of the active controller
   A('SYS-BEACON', function () { return b(S.alarmList && S.alarmList().some(function (a) { return !a.acked && a.level === 1; })); });
@@ -352,7 +352,7 @@
   });
   S.unbound = S.tagOrder.filter(function (id) { return !T[id].bound; });
 
-  /* PM-station tags go stale when its fibre link is cut (I/O row 4 and the station switch) */
+  /* PM-station tags go stale when its fibre link is cut (its Edge I/O island and the station switch) */
   var pmTags = S.tagOrder.filter(function (id) { return /^PMS-/.test(id); });
   /* EMS and battery values read through the EMS go stale when the EMS stops (the heartbeat keeps its last value) */
   var emsTags = S.tagOrder.filter(function (id) { return /^(EMS-|BESS-)/.test(id) && T[id].src === 'COM' && T[id].type !== 'DO' && T[id].type !== 'AO' && id !== 'EMS-HEARTBEAT'; });
