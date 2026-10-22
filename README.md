@@ -45,6 +45,7 @@ emergency stop, generator fail-to-start, inverter faults, PM fibre cut…).
 * `docs/figures/` – report figures (`*_se` for the Schneider design).
 * `docs/source/` – Blueflag's rev 0 originals, unchanged.
 * `docs/BFE-PR-26-01-SCADA-Drawing-Set_SICAM.pdf` – Attachment A drawings BFE/PR/26/01-SCADA-001 to 005 (architecture, communication network, PV interface, BESS interface, overview SLD) for the SICAM A8000 design (Rev 1); sources in `docs/drawings/`.
+* `docs/Villa_Somalia_SCADA_Bill_of_Material_SICAM.xlsx` – bill of material for the SICAM A8000 design, by panel and by order line, with I/O check, equipment by others and services.
 * `docs/superseded/` – Rev 1 report and I/O list on the Siemens SICAM A8000 platform, replaced by Rev 2.
 
 Rebuild everything from the rev 0 originals:
@@ -58,6 +59,7 @@ python3 tools/draw_report_figures_schneider.py docs/figures && node tools/svg_to
 node tools/capture_screens.js && node tools/build_attachment_e.js
 python3 tools/convert_report_schneider.py docs/superseded/Villa_Somalia_SCADA_Design_Report_Rev1.docx docs/Villa_Somalia_SCADA_Design_Report_Rev2.docx
 python3 tools/draw_drawings_sicam.py docs/drawings && node tools/svgs_to_pdf.js docs/BFE-PR-26-01-SCADA-Drawing-Set_SICAM.pdf docs/drawings/*.svg
+python3 tools/build_bom_sicam.py docs/Villa_Somalia_SCADA_Bill_of_Material_SICAM.xlsx
 python3 tools/schneider_io_allocation.py docs/superseded/Villa_Somalia_SCADA_Device_and_IO_List_Rev1.xlsx docs/Villa_Somalia_IO_Allocation_Schneider_Requote.xlsx
 ```
 
