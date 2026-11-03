@@ -10,7 +10,7 @@ import json, os, re, sys
 import openpyxl
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
-SRC = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, 'docs', 'Rev3_Submission', 'Villa_Somalia_SCADA_Device_and_IO_List_Rev3.xlsx')
+SRC = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, 'docs', 'Submission_Rev1', 'Villa_Somalia_SCADA_Device_and_IO_List_Rev1.xlsx')
 OUT = sys.argv[2] if len(sys.argv) > 2 else os.path.join(ROOT, 'hmi', 'js', 'iolist.js')
 
 UNIT = {'deg C': '°C', 'kohm': 'kΩ', 'W/m2': 'W/m²', 'deg': '°', '-': '', None: ''}

@@ -1,11 +1,12 @@
-"""SCADA Design Report Rev 3: Siemens SICAM A8000 confirmed as the selected architecture (RFA-001/BRA/26 Issue H).
+"""SCADA Design Report Rev 1 (first revision): Siemens SICAM A8000 confirmed as the selected architecture (RFA-001/BRA/26 Issue H).
 
-Input is Rev 1 (docs/superseded, from tools/revise_report.py). The design content is that of Rev 1. Rev 3 adds the
-revision history, the coordinated attachments (drawings Rev B, I/O list Rev 3, HMI screens Rev 3, bill of material
-Rev B) and aligns the equipment and spares tables with the bill of material. Each edit names the exact old text, so a
-changed source fails loudly. A final sweep fails if any Schneider control-platform term is present.
+Input is the original submission (Rev 0; docs/superseded, from tools/revise_report.py, headed "Rev 1" inside). The design
+is unchanged. Rev 1 adds the revision history and the coordinated attachments (A drawings Rev B, B I/O list Rev 1,
+C HMI screens Rev 1, D bill of material Rev 1), and adds the server rack and SW-MV enclosure to the equipment table.
+Each edit names the exact old text, so a changed source fails loudly. A final sweep fails if any Schneider
+control-platform term or attachment E/F is present.
 
-Usage: python3 tools/make_rev3_report.py <rev1.docx> <rev3.docx>
+Usage: python3 tools/make_resubmission_report.py <original.docx> <rev1.docx>
 """
 import re
 import sys
@@ -17,10 +18,10 @@ SRC, OUT = sys.argv[1], sys.argv[2]
 d = docx.Document(SRC)
 T = d.tables
 
-IOL = 'Villa_Somalia_SCADA_Device_and_IO_List_Rev3.xlsx'
+IOL = 'Villa_Somalia_SCADA_Device_and_IO_List_Rev1.xlsx'
 DWG = 'BFE-PR-26-01-SCADA-Drawing-Set_RevB.pdf'
-HMI = 'Villa_Somalia_SCADA_Attachment_E_HMI_Screens_Rev3.pdf'
-BOM = 'Villa_Somalia_SCADA_Bill_of_Material_RevB.xlsx'
+HMI = 'Villa_Somalia_SCADA_Attachment_C_HMI_Screens_Rev1.pdf'
+BOM = 'Villa_Somalia_SCADA_Bill_of_Material_Rev1.xlsx'
 
 
 def all_pars():
@@ -104,21 +105,20 @@ def insert_par_after(p, text):
 
 
 # ---------------------------------------------------------------- title and introduction
-par('Oct 12, 2026', 'Rev 3 · 3 Nov 2026')
+par('Oct 12, 2026', 'Rev 1 · 3 Nov 2026')
 p = par("It answers the client's review comments on the earlier drawing set.", "It answers the client's review comments on the earlier drawing set.")
-insert_par_after(p, 'Revision 3 confirms Siemens SICAM A8000 as the selected architecture, in reply to the Employer\'s comment on RFA-001/BRA/26 '
-                    'Issue H. It is the one coordinated design package for review and approval. It supersedes Rev 1, and Rev 2 (Schneider Electric '
-                    'Modicon M580) is withdrawn in full. The design is that of Rev 1; the changes are listed in the revision history below.')
+insert_par_after(p, 'Revision 1 confirms Siemens SICAM A8000 as the selected architecture, in reply to the Employer\'s comment on RFA-001/BRA/26 '
+                    'Issue H. It is the one coordinated design package for review and approval. It supersedes the original submission (Rev 0), '
+                    'and the alternative submitted on Schneider Electric Modicon M580 is withdrawn in full. The design is that of the original '
+                    'submission; the changes are listed in the revision history below.')
 
 # ---------------------------------------------------------------- reference documents
-cell(0, 3, 0, 'Rev1.xlsx', 'Rev3.xlsx')
 add_row(0, ['Drawing set BFE/PR/26/01-SCADA-001 to 005, Rev B', 'SCADA architecture, communication network, PV interface, BESS interface, '
                                                                  'SCADA overview SLD (Attachment A)'])
-add_row(0, [HMI, 'HMI screen mock-ups, 12 screens (Attachment E)'])
-add_row(0, [BOM, 'Bill of material by panel and by order line (Attachment F)'])
+add_row(0, [HMI, 'HMI screen mock-ups, 12 screens (Attachment C)'])
+add_row(0, [BOM, 'Bill of material by panel and by order line (Attachment D)'])
 add_row(0, ['RFA-001/BRA/26 Issue H, Employer\'s comment of 20 Oct 2026', 'Confirm the selected architecture and resubmit one coordinated package'])
 
-# revision history: heading and table after the reference documents table
 ref_head = [p for p in d.paragraphs if p.text == 'Reference documents'][0]
 h = deepcopy(ref_head._p)
 T[0]._tbl.addnext(h)
@@ -130,50 +130,47 @@ rev_tbl = deepcopy(T[0]._tbl)
 h.addnext(rev_tbl)
 rt = docx.table.Table(rev_tbl, ref_head._parent)
 fill(rt, [
-    ['Rev 1, October 2026', 'First issue on Siemens SICAM A8000. Superseded by Rev 3.'],
-    ['Rev 2, October 2026', 'Alternative on Schneider Electric Modicon M580 and Machine SCADA Expert. Withdrawn: not to be used for review, '
-                           'procurement or construction.'],
-    ['Rev 3, 3 Nov 2026', 'SICAM A8000 confirmed (RFA-001/BRA/26 Issue H). Design as Rev 1. Drawings BFE/PR/26/01-SCADA-001 to 005 Rev B issued as '
-                          'Attachment A and the bill of material as Attachment F. 24 V power supplies, server rack, SW-MV enclosure and spares '
-                          'aligned with the bill of material. For approval.'],
+    ['Rev 0, October 2026', 'Original submission on Siemens SICAM A8000 (its documents are headed "Rev 1"). Superseded by Rev 1.'],
+    ['Alternative, October 2026', 'Alternative on Schneider Electric Modicon M580 and Machine SCADA Expert, submitted with the original. '
+                                  'Withdrawn: not to be used for review, procurement or construction.'],
+    ['Rev 1, 3 Nov 2026', 'First revision. SICAM A8000 confirmed (RFA-001/BRA/26 Issue H). Design as the original submission. Attachments: '
+                          'A drawings BFE/PR/26/01-SCADA-001 to 005 Rev B, B device and I/O list, C HMI screen mock-ups, D bill of material. '
+                          'Server rack and SW-MV enclosure added to the equipment list. For approval.'],
 ], header=['Revision', 'Description and status'])
 
 # ---------------------------------------------------------------- compliance table
-cell(1, 1, 2, 'attachments A to E', 'attachments A to F')
-cell(1, 5, 3, '11, 13, Attachment C', '11, 13, Attachments C and F')
+cell(1, 1, 2, 'attachments A to E', 'attachments A to D')
+cell(1, 2, 3, 'Attachment E', 'Attachment C')
+cell(1, 5, 2, 'datasheets attached', 'datasheets from the suppliers')
+cell(1, 5, 3, '11, 13, Attachment C', '11, 13, Attachment D')
 
-# ---------------------------------------------------------------- 13 Equipment
-par('Product numbers marked "to confirm" will be taken from the supplier quotations.',
-    'Product numbers marked "to confirm" will be taken from the supplier quotations. The full bill of material, by panel and by order line, '
-    'is Attachment F.')
-cell(25, 12, 1, 'Siemens SITOP PSU8200 24 V/20 A', 'Siemens SITOP PSU8200: 24 V/20 A in the cabinet, 24 V/5 A at the field panels')
-cell(25, 12, 0, '24 V DC power supplies', '24 V DC power supplies (1 + 5)')
+# ---------------------------------------------------------------- 12 HMI and 13 Equipment
+par('the full set is in Attachment E', 'the full set is in Attachment C')
+par('Datasheets for each item are collected in Attachment C.', 'The full bill of material, by panel and by order line, is Attachment D.')
+par('Datasheets in Attachment C', 'Datasheets')
 add_row(25, ['Network enclosure for SW-MV, IP55', 'Rittal AX', '1'])
 add_row(25, ['Server rack 24U with rack console', 'To suit', '1'])
 fill(T[26], [
     ['Configured flash card for the CP-8050', '1', 'Controller B is the running spare; the card restores a replaced controller quickly'],
     ['DI-8112, DO-8221, CI-8533, PS-8642', '1 each', 'One of each I/O module type and a controller power supply on site'],
     ['Field switch and fibre transceivers', '1 and 2', 'Network repair'],
-    ['SITOP 24 V/5 A and MGate MB3170', '1 each', 'Field panel repair'],
+    ['SITOP 24 V/20 A and MGate MB3170', '1 each', 'Field panel repair'],
 ])
 
 # ---------------------------------------------------------------- 14 Attachments
-at = T[28]
-cell(28, 1, 1, at.rows[1].cells[1].text, 'Drawings BFE/PR/26/01-SCADA-001 to 005: SCADA architecture, communication network, PV interface, '
-                                         'BESS interface and SCADA overview SLD (' + DWG + ')')
-cell(28, 1, 2, at.rows[1].cells[2].text, 'Rev B, complete')
-cell(28, 2, 1, 'Rev1.xlsx', 'Rev3.xlsx')
-cell(28, 2, 2, 'Rev 1, complete', 'Rev 3, complete')
-cell(28, 5, 1, 'Villa_Somalia_SCADA_Attachment_E_HMI_Screens.pdf', HMI)
-cell(28, 5, 2, 'Rev 1, complete', 'Rev 3, complete')
-add_row(28, ['F', 'Bill of material by panel and by order line, with I/O check and equipment by others (' + BOM + ')', 'Rev B, for pricing'])
+fill(T[28], [
+    ['A', 'SCADA architecture drawings BFE/PR/26/01-SCADA-001 to 005: architecture, communication network, PV interface, BESS interface '
+          'and SCADA overview SLD (' + DWG + ')', 'Rev B, complete'],
+    ['B', 'Device and I/O list (' + IOL + ')', 'Rev 1, complete'],
+    ['C', 'HMI screen mock-ups: 12 screens from the HMI demonstration, including a battery fire (' + HMI + ')',
+     'Rev 1, complete; final screens built in SICAM SCC'],
+    ['D', 'Bill of material by panel and by order line, with I/O check and equipment by others (' + BOM + ')', 'Rev 1, for pricing'],
+])
 
 # ---------------------------------------------------------------- sweep
 text = '\n'.join(p.text for p in all_pars())
-for bad in ('M580', 'Modicon', 'Machine SCADA', 'EcoStruxure', 'Edge I/O', 'X80', 'BMEH', 'BMX', 'NTS', 'Rev1.xlsx', 'Rev 1, complete'):
-    hits = [m.start() for m in re.finditer(re.escape(bad), text)]
-    allowed = text.count('Schneider Electric Modicon M580') if bad in ('M580', 'Modicon') else 0
-    allowed += text.count('Modicon M580 and Machine SCADA Expert') if bad == 'Machine SCADA' else 0
-    assert len(hits) <= allowed, (bad, len(hits), [text[max(0, i - 60):i + 60] for i in hits])
+for bad in ('Attachment E', 'Attachment F', 'attachments A to E', 'Datasheets in Attachment', 'X80', 'BMEH', 'BMX', 'Edge I/O', 'EcoStruxure'):
+    assert bad not in text, bad
+assert text.count('M580') == 2 and text.count('Machine SCADA') == 1, (text.count('M580'), text.count('Machine SCADA'))
 d.save(OUT)
 print('wrote', OUT)

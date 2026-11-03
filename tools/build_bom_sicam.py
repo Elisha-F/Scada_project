@@ -1,7 +1,7 @@
-"""Bill of material for the SICAM A8000 design (Attachment F to SCADA Design Report Rev 3, drawings BFE/PR/26/01-SCADA-001 to 005 Rev B).
+"""Bill of material for the SICAM A8000 design (Attachment D to SCADA Design Report Rev 1, drawings BFE/PR/26/01-SCADA-001 to 005 Rev B).
 
 Usage: python3 tools/build_bom_sicam.py [out.xlsx]
-Quantities follow the Device and I/O List Rev 3; prices are entered once on the Summary sheet.
+Quantities follow the Device and I/O List Rev 1; prices are entered once on the Summary sheet.
 """
 import sys
 
@@ -9,7 +9,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
-OUT = sys.argv[1] if len(sys.argv) > 1 else 'docs/Rev3_Submission/Villa_Somalia_SCADA_Bill_of_Material_RevB.xlsx'
+OUT = sys.argv[1] if len(sys.argv) > 1 else 'docs/Submission_Rev1/Villa_Somalia_SCADA_Bill_of_Material_Rev1.xlsx'
 
 NAVY, AMBER, GREY, YELLOW, BAND = '14263D', 'E8A33B', 'EEF1F4', 'FFF2CC', 'DCE6F0'
 THIN = Side(style='thin', color='C9D0D8')
@@ -43,7 +43,6 @@ CAT = {
     'FW': ('Rugged firewall with VPN', 'Fortinet', 'FortiGate Rugged 60F', 'FGR-60F', MEM, 'pc'),
     'GPS': ('GPS time server with antenna, cable and surge protector', 'Meinberg', 'LANTIME M300', 'M300/GPS', MEM, 'set'),
     'PSU20': ('24 V DC power supply 20 A, input 85-275 V AC / 88-350 V DC', 'Siemens', 'SITOP PSU8200 24 V/20 A', '6EP1336-3BA10', CHK, 'pc'),
-    'PSU5': ('24 V DC power supply 5 A, input 85-264 V AC / 110-300 V DC', 'Siemens', 'SITOP PSU8200 24 V/5 A', '6EP1333-3BA10', MEM, 'pc'),
     'PM5560': ('Power meter with Ethernet, Modbus TCP', 'Schneider Electric', 'PowerLogic PM5560', 'METSEPM5560', MEM, 'pc'),
     'VX25': ('SCADA cabinet 800 x 2000 x 800 mm, with plinth', 'Rittal', 'VX25', '8808.000', MEM, 'pc'),
     'AX': ('Outdoor I/O panel, IP55 minimum, with sun shade', 'Rittal', 'AX', 'Size to suit', TBC, 'pc'),
@@ -85,7 +84,7 @@ P = [
         ('PS8642', 4, 'Two per controller', 'Confirm the CP-8050 accepts a second supply.'),
         ('CI8520', 2, 'One per controller', 'Separate port per network zone; not a switch.'),
         ('FLASH', 2, 'One per controller', ''),
-        ('LIC', 2, 'One set per controller', 'Including the hot standby function if licensed separately (open point 12).'),
+        ('LIC', 2, 'One set per controller', 'Including the hot standby function if licensed separately.'),
         ('CI8532', 1, 'Row 1 interface', 'Row 1 on its own interface so both controllers reach it.'),
         ('DI8112', 5, 'R1-DI01 to R1-DI05', '11 kV panels AH1 to AH8.'),
         ('DO8221', 2, 'R1-CO01, R1-CO02', 'Breaker open and close AH1 to AH7.'),
@@ -105,7 +104,7 @@ P = [
     ]),
     ('P2', 'Control room (SCADA servers, operator and engineering stations)', 'Control room', [
         ('IPC', 2, 'SRV-A, SRV-B', 'Server A active, B hot standby.'),
-        ('RACK', 1, 'Server rack', 'Device List D52. Houses the rack servers and UPS. Confirm the room.'),
+        ('RACK', 1, 'Server rack', 'Device List D51. Houses the rack servers and UPS. Confirm the room.'),
         ('OWS', 1, 'OWS-01', ''),
         ('MON', 2, 'OWS-01', 'Two monitors.'),
         ('LAP', 1, 'ENG-01', ''),
@@ -120,7 +119,7 @@ P = [
         ('FSW', 1, 'SW-PRS', ''),
         ('SFP', 2, 'SW-PRS ring ports', ''),
         ('MGATE', 1, 'MGate-PRS', 'ST260E RMU relay, RS485.'),
-        ('PSU5', 1, 'Panel 24 V', 'Device List D51. A 20 A unit would be oversized here.'),
+        ('PSU20', 1, 'Panel 24 V', 'Switch and gateway supply.'),
         ('PM5560', 1, 'PM5560-PRS', 'Mounted in the LVDB.'),
         ('FSB', 1, 'Fibre termination', ''),
         ('AX', 1, 'Row 3 panel', ''),
@@ -133,7 +132,7 @@ P = [
         ('FSW', 1, 'SW-PMS', ''),
         ('SFP', 2, 'SW-PMS ring ports', ''),
         ('MGATE', 1, 'MGate-PMS', 'ST260E RMU relay, RS485.'),
-        ('PSU5', 1, 'Panel 24 V', ''),
+        ('PSU20', 1, 'Panel 24 V', ''),
         ('PM5560', 1, 'PM5560-PMS', 'Mounted in the LVDB.'),
         ('FSB', 1, 'Fibre termination', ''),
         ('AX', 1, 'Row 4 panel', ''),
@@ -144,7 +143,7 @@ P = [
         ('DI8112', 2, 'R5-DI01, R5-DI02', 'Fire panel, BESS ACB, PV ACB, MCCBs, inverter TX. Spare 19 %: see I/O Check.'),
         ('FSW', 1, 'SW-BESS', 'Mounted in the row 5 panel; Ethernet to the EMS in the container.'),
         ('SFP', 2, 'SW-BESS ring ports', ''),
-        ('PSU5', 1, 'Panel 24 V', ''),
+        ('PSU20', 1, 'Panel 24 V', ''),
         ('FSB', 1, 'Fibre termination', ''),
         ('AX', 1, 'Row 5 panel', ''),
         ('ACC_P', 1, 'Row 5 panel', ''),
@@ -155,8 +154,8 @@ P = [
         ('AI8320', 1, 'R6-AI01', 'Fuel level DG1, DG2.'),
         ('FSW', 1, 'SW-GEN', ''),
         ('SFP', 2, 'SW-GEN ring ports', ''),
-        ('PSU5', 1, 'Panel 24 V', ''),
-        ('MGATE', 0, 'MGate-GEN (option)', 'Only if the generator controllers are RS485 only (open point 3). Quantity 0 until confirmed.'),
+        ('PSU20', 1, 'Panel 24 V', ''),
+        ('MGATE', 0, 'MGate-GEN (option)', 'Only if the generator controllers are RS485 only. Quantity 0 until confirmed.'),
         ('FSB', 1, 'Fibre termination', ''),
         ('AX', 1, 'Row 6 panel', ''),
         ('ACC_P', 1, 'Row 6 panel', ''),
@@ -164,9 +163,9 @@ P = [
     ('P7', 'Inverter MV station network enclosure (SW-MV)', 'Inverter MV station', [
         ('FSW', 1, 'SW-MV', "PLC box and blue'Log XM."),
         ('SFP', 2, 'SW-MV ring ports', ''),
-        ('PSU5', 1, 'Enclosure 24 V', ''),
+        ('PSU20', 1, 'Enclosure 24 V', ''),
         ('FSB', 1, 'Fibre termination', ''),
-        ('AXS', 1, 'SW-MV enclosure', 'Device List D53. Omit if the switch fits in the PLC box cabinet.'),
+        ('AXS', 1, 'SW-MV enclosure', 'Device List D52. Omit if the switch fits in the PLC box cabinet.'),
         ('ACC_P', 1, 'SW-MV enclosure', ''),
     ]),
     ('C', 'Cables and passive network material (site-wide; lengths from the cable route drawings)', 'Site', [
@@ -194,7 +193,7 @@ P = [
         ('FLASH', 1, 'Spare', 'Keep a copy of the controller configuration on it.'),
         ('FSW', 1, 'Spare', ''),
         ('SFP', 2, 'Spare', ''),
-        ('PSU5', 1, 'Spare', ''),
+        ('PSU20', 1, 'Spare', ''),
         ('MGATE', 1, 'Spare', ''),
     ]),
 ]
@@ -227,7 +226,7 @@ SERVICES = [
     ('Warranty and remote support, 2 years', 'lot'),
 ]
 
-IO_ROWS = [  # row, location, interface, modules (type, qty, channels), used signals (I/O list Rev 3)
+IO_ROWS = [  # row, location, interface, modules (type, qty, channels), used signals (I/O list Rev 1)
     (1, '11 kV switchroom', 'CI-8532', [('DI-8112', 5, 16), ('DO-8221', 2, 12), ('DO-8212', 1, 8)], 87),
     (2, 'SCADA cabinet', 'CI-8532', [('DI-8112', 2, 16), ('AI-8320', 1, 4)], 25),
     (3, 'President station', 'CI-8533', [('DI-8112', 3, 16), ('DO-8221', 1, 12)], 43),
@@ -271,8 +270,8 @@ rm.column_dimensions['B'].width = 110
 lines = [
     ('Villa Somalia Hybrid Plant: SCADA Bill of Material', None),
     ('Project', 'Solarization of Villa Somalia, Mogadishu. 1,516 kWp PV, 3,340 kWh BESS, 2 diesel generators, 11 kV switchboard, 2 office transformer stations.'),
-    ('Basis', 'Siemens SICAM A8000, the selected architecture (RFA-001/BRA/26 Issue H): SCADA Design Report Rev 3, Device and I/O List Rev 3, drawings BFE/PR/26/01-SCADA-001 to 005 Rev B.'),
-    ('Status', 'Rev B, 3 Nov 2026: Attachment F to the Design Report Rev 3, for pricing and supplier quotations. Supersedes Rev A. Quantities fixed by the design; prices to be entered.'),
+    ('Basis', 'Siemens SICAM A8000, the selected architecture (RFA-001/BRA/26 Issue H): SCADA Design Report Rev 1, Device and I/O List Rev 1, drawings BFE/PR/26/01-SCADA-001 to 005 Rev B.'),
+    ('Status', 'Rev 1, 3 Nov 2026: Attachment D to the Design Report Rev 1, for pricing and supplier quotations. Quantities fixed by the design; prices to be entered.'),
     ('Architecture', 'Two CP-8050 in hot standby; six I/O rows (24 modules, 244 hardwired signals, 27 % spare); SICAM SCC on two servers by IEC 60870-5-104; '
                      'managed fibre ring of 7 switches; one firewall with VPN off by default; GPS time.'),
     ('Sheets', None),
@@ -292,8 +291,8 @@ lines = [
           'rows to the 24 V variants (CI-8531, DI-8110) fed from the SITOP.'),
     ('2', 'Siemens to confirm: CI-8533 and DO-8221 ordering numbers, the hot standby function and licence, switchover time, and how the I/O rows connect to both controllers.'),
     ('3', 'Network ordering codes (Moxa, Fortinet, Meinberg) are from memory. Siemens SCALANCE equivalents may be offered instead; keep the same port counts.'),
-    ('4', 'Field switches at the stations, yard and MV station use a 5 A SITOP (Device List D51); the 20 A unit (D40) is only in the SCADA cabinet.'),
-    ('5', 'The server rack with console (D52) and the SW-MV enclosure (D53) were added to the Device List in Rev 3 to match this bill of material.'),
+    ('4', '24 V supplies: SITOP PSU8200 24 V/20 A in the SCADA cabinet and at each field panel, six in all (Device List D40).'),
+    ('5', 'The server rack with console (D51) and the SW-MV enclosure (D52) were added to the Device List in Rev 1 to match this bill of material.'),
     ('6', 'Cable and fibre lengths are left open until the cable route drawings are available.'),
     ('7', 'Currency and prices: enter in the Summary sheet. Totals calculate automatically.'),
 ]
@@ -383,7 +382,7 @@ bp.freeze_panes = 'C3'
 
 # ---------------------------------------------------------------- I/O Check
 io = wb.create_sheet('IO Check')
-io['A1'] = 'I/O modules against the hardwired signals of the I/O list Rev 3'
+io['A1'] = 'I/O modules against the hardwired signals of the I/O list Rev 1'
 io['A1'].font = Font(bold=True, size=14, color=NAVY)
 head(io, 2, ['Row', 'Location', 'Interface', 'Modules', 'Module count', 'Channels', 'Signals used', 'Spare', 'Spare %', 'Remark'],
      [6, 24, 12, 44, 13, 10, 13, 9, 9, 60])

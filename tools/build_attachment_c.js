@@ -1,4 +1,4 @@
-/* Builds Attachment E of the design report: the HMI screen mock-ups as one PDF, A4 landscape.
+/* Builds Attachment C of the design report: the HMI screen mock-ups as one PDF, A4 landscape.
  * Usage: node tools/build_attachment_e.js [out.pdf]
  * Takes the captures in docs/Attachment_E_Screens (made by tools/capture_screens.js).
  */
@@ -7,7 +7,7 @@ const path = require('path');
 const { chromium } = require(require('child_process').execSync('npm root -g').toString().trim() + '/playwright');
 const root = path.resolve(__dirname, '..');
 const dir = path.join(root, 'docs', 'Attachment_E_Screens');
-const out = path.resolve(process.argv[2] || path.join(root, 'docs', 'Rev3_Submission', 'Villa_Somalia_SCADA_Attachment_E_HMI_Screens_Rev3.pdf'));
+const out = path.resolve(process.argv[2] || path.join(root, 'docs', 'Submission_Rev1', 'Villa_Somalia_SCADA_Attachment_C_HMI_Screens_Rev1.pdf'));
 
 const SCREENS = [
   ['E01_plant_overview', 'Plant overview', 'The opening screen: a live single-line diagram of the whole plant. Generators, PV, battery, the 11 kV switchboard AH1 to AH8, both office stations and the auxiliary supply, with power at each point, breaker positions, the EMS state and summary values with their tags.'],
@@ -37,14 +37,14 @@ table { border-collapse: collapse; font-size: 10pt; margin-top: 4mm; } td { padd
 .foot { font-size: 8pt; color: #8a8a84; margin-top: 2mm; }`;
 
 let html = `<html><head><meta charset="utf-8"><style>${css}</style></head><body><section>
-<h1>Attachment E · HMI screen mock-ups · Rev 3</h1>
-<div class="sub">Solarization of Villa Somalia · SCADA Design Report Rev 3 · Blueflag Energy · drawing set BFE/PR/26/01</div>
+<h1>Attachment C · HMI screen mock-ups · Rev 1</h1>
+<div class="sub">Solarization of Villa Somalia · SCADA Design Report Rev 1 · Blueflag Energy · drawing set BFE/PR/26/01</div>
 <p class="note">These screens are mock-ups from the HMI demonstration, running on a simulator of the plant mapped onto every signal of the device and I/O list (Attachment B). They are submitted for approval of layout and content. The final screens are built in SICAM SCC to the same layout and content before the factory test.</p>
 <p>Conventions: breaker closed red and open green, as on the screens already used on site; live conductors dark blue, dead grey; alarm levels 1 red, 2 orange and 3 yellow; values from a device that has stopped communicating shown as ### in magenta, never as live. Every command opens a confirmation step, and controls a user may not operate are disabled for that role.</p>
-<table>${SCREENS.map((s, i) => `<tr><td>E.${i + 1}</td><td>${s[1]}</td></tr>`).join('')}</table></section>`;
+<table>${SCREENS.map((s, i) => `<tr><td>C.${i + 1}</td><td>${s[1]}</td></tr>`).join('')}</table></section>`;
 SCREENS.forEach((s, i) => {
   const img = 'data:image/png;base64,' + fs.readFileSync(path.join(dir, s[0] + '.png')).toString('base64');
-  html += `<section><h2>E.${i + 1} ${s[1]}</h2><p>${s[2]}</p><div class="img"><img src="${img}"></div><div class="foot">Mock-up from the HMI demonstration · Attachment E to the SCADA Design Report Rev 3</div></section>`;
+  html += `<section><h2>C.${i + 1} ${s[1]}</h2><p>${s[2]}</p><div class="img"><img src="${img}"></div><div class="foot">Mock-up from the HMI demonstration · Attachment C to the SCADA Design Report Rev 1</div></section>`;
 });
 html += '</body></html>';
 

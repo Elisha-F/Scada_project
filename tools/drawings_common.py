@@ -161,7 +161,7 @@ def sheet(no, title, subtitle, body, legend, notes, legend_extra=''):
     y0 = 188
     s.append(f'<line x1="{X0}" y1="{y0}" x2="{W - 5}" y2="{y0}" stroke="{INK}" stroke-width="0.3"/>')
     rt, _ = table(cx, y0 + 1.5, [8, cw - 30, 22], ['REV', 'DESCRIPTION', 'DATE'],
-                  [['A', 'Issued for client approval – SICAM A8000 design', '16-OCT-2026'], ['B', 'Re-issued with Design Report Rev 3; SICAM A8000 confirmed', '03-NOV-2026'], ['', '', '']], size=1.6)
+                  [['A', 'Issued for client approval – SICAM A8000 design', '16-OCT-2026'], ['B', 'Re-issued with Design Report Rev 1; SICAM A8000 confirmed', '03-NOV-2026'], ['', '', '']], size=1.6)
     s.append(rt)
     yb = 210
     blocks = [('CLIENT:', ['MINISTRY OF ENERGY & WATER RESOURCES – SOMALIA', 'SITE: VILLA SOMALIA']), ('CONTRACTOR:', ['BLUEFLAG ENERGY CO. LTD']),

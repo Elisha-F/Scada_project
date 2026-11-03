@@ -1,4 +1,4 @@
-/* Captures the HMI screens for Attachment E of the design report (screen mock-ups).
+/* Captures the HMI screens for Attachment C of the design report (screen mock-ups).
  * Usage: node tools/capture_screens.js [out_dir]      (default docs/Attachment_E_Screens)
  * Needs Playwright with Chromium. The simulator clock is fixed to 11:20 Mogadishu time
  * so every capture shows the same daytime plant state.

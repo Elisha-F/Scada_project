@@ -1,6 +1,6 @@
-"""Cover letter and document register for the resubmission in reply to RFA-001/BRA/26 Issue H.
+"""Cover letter and document register for the first revision (Rev 1), in reply to RFA-001/BRA/26 Issue H.
 
-Usage: python3 tools/build_transmittal_rev3.py [out.docx]
+Usage: python3 tools/build_transmittal.py [out.docx]
 """
 import sys
 
@@ -10,36 +10,34 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt, RGBColor
 
-OUT = sys.argv[1] if len(sys.argv) > 1 else 'docs/Rev3_Submission/Villa_Somalia_SCADA_Resubmission_Transmittal_RFA-001.docx'
+OUT = sys.argv[1] if len(sys.argv) > 1 else 'docs/Submission_Rev1/Villa_Somalia_SCADA_Resubmission_Transmittal_RFA-001.docx'
 NAVY = RGBColor(0x14, 0x26, 0x3D)
 
 REGISTER = [
-    ['1', 'SCADA Design Report', 'Villa_Somalia_SCADA_Design_Report_Rev3.docx', 'Rev 3', 'Rev 1 and Rev 2', 'For approval'],
-    ['2', 'Attachment A: drawings BFE/PR/26/01-SCADA-001 to 005 (architecture, communication network, PV interface, BESS interface, '
-          'SCADA overview SLD)', 'BFE-PR-26-01-SCADA-Drawing-Set_RevB.pdf', 'Rev B', 'Rev A', 'For approval'],
-    ['3', 'Attachment B: Device and I/O List', 'Villa_Somalia_SCADA_Device_and_IO_List_Rev3.xlsx', 'Rev 3', 'Rev 1 and Rev 2', 'For approval'],
-    ['4', 'Attachment C: Datasheets', '-', '-', '-', 'To follow, collected from the suppliers'],
-    ['5', 'Attachment D: Panel layouts and wiring diagrams', '-', '-', '-', 'To follow, after the equipment terminal schedules'],
-    ['6', 'Attachment E: HMI screen mock-ups (12 screens)', 'Villa_Somalia_SCADA_Attachment_E_HMI_Screens_Rev3.pdf', 'Rev 3',
-          'Rev 1 (cover titled "Attachment C") and Rev 2', 'For approval'],
-    ['7', 'Attachment F: Bill of material', 'Villa_Somalia_SCADA_Bill_of_Material_RevB.xlsx', 'Rev B', 'Rev A', 'For information and pricing'],
+    ['1', 'SCADA Design Report', 'Villa_Somalia_SCADA_Design_Report_Rev1.docx', 'Rev 1', 'Rev 0 (original submission)', 'For approval'],
+    ['2', 'Attachment A: SCADA architecture drawings BFE/PR/26/01-SCADA-001 to 005 (architecture, communication network, PV interface, '
+          'BESS interface, SCADA overview SLD)', 'BFE-PR-26-01-SCADA-Drawing-Set_RevB.pdf', 'Rev B', 'Rev A (original submission)', 'For approval'],
+    ['3', 'Attachment B: Device and I/O list', 'Villa_Somalia_SCADA_Device_and_IO_List_Rev1.xlsx', 'Rev 1', 'Rev 0 (original submission)', 'For approval'],
+    ['4', 'Attachment C: HMI screen mock-ups (12 screens)', 'Villa_Somalia_SCADA_Attachment_C_HMI_Screens_Rev1.pdf', 'Rev 1',
+          'Rev 0 (original submission)', 'For approval'],
+    ['5', 'Attachment D: Bill of material', 'Villa_Somalia_SCADA_Bill_of_Material_Rev1.xlsx', 'Rev 1', '-', 'For information and pricing'],
 ]
 WITHDRAWN = [
-    ['SCADA Design Report Rev 2 (Schneider Electric Modicon M580, EcoStruxure Machine SCADA Expert)', 'Withdrawn'],
-    ['Device and I/O List Rev 2 (Schneider Electric I/O allocation)', 'Withdrawn'],
-    ['HMI screen mock-ups Rev 2 (Schneider Electric controller on the communication screen)', 'Withdrawn'],
-    ['Drawing set on the Schneider Electric M580 power plant controller architecture', 'Withdrawn'],
-    ['Schneider Electric I/O allocation for the requote', 'Withdrawn'],
-    ['SCADA Design Report Rev 1, Device and I/O List Rev 1, HMI screens Rev 1, drawings Rev A, bill of material Rev A (Siemens SICAM A8000)',
-     'Superseded by this package'],
+    ['SCADA Design Report on Schneider Electric Modicon M580 and EcoStruxure Machine SCADA Expert (alternative)', 'Withdrawn'],
+    ['Device and I/O list with the Schneider Electric I/O allocation (alternative)', 'Withdrawn'],
+    ['HMI screen mock-ups with the Schneider Electric controller (alternative)', 'Withdrawn'],
+    ['Drawing set on the Schneider Electric M580 power plant controller architecture (alternative)', 'Withdrawn'],
+    ['Schneider Electric I/O allocation for the requote (alternative)', 'Withdrawn'],
+    ['Original submission, Rev 0: SCADA Design Report, Device and I/O list and HMI screen mock-ups (headed "Rev 1"), drawings Rev A '
+     '(Siemens SICAM A8000)', 'Superseded by this package'],
 ]
 CHANGES = [
     'No change to the architecture, signals or tags: 244 hardwired signals on 24 SICAM I/O modules in six rows (27 % spare), 463 communication points.',
-    'Revision history added to the Design Report; Attachment A (drawings) and Attachment F (bill of material) issued and referenced.',
-    '24 V power supplies: one 20 A unit in the SCADA cabinet and five 5 A units at the field panels (was six 20 A).',
-    'Added: 19-inch server rack with console for the control room; network enclosure for field switch SW-MV.',
-    'Spares list aligned with the bill of material (adds a controller power supply, a 5 A power supply and a serial gateway).',
-    'HMI screen mock-ups are Attachment E, as the Design Report lists them. Attachment C is the datasheets.',
+    'Revision history added to the Design Report; the SCADA architecture drawings (Attachment A) and the bill of material (Attachment D) '
+    'issued and referenced.',
+    'Attachments arranged as A drawings, B device and I/O list, C HMI screen mock-ups, D bill of material.',
+    'Added to the equipment list: 19-inch server rack with console for the control room; network enclosure for field switch SW-MV.',
+    'Spares list aligned with the bill of material (adds a controller power supply, a 24 V power supply and a serial gateway).',
 ]
 
 
@@ -120,24 +118,19 @@ doc.add_paragraph('The alternative on Schneider Electric Modicon M580 is withdra
                   'coordinated design package for the Employer\'s review and approval.')
 
 heading('2. Documents submitted')
-table(doc, ['No.', 'Document', 'File', 'Rev', 'Supersedes', 'Status'], REGISTER, [0.9, 4.6, 5.6, 1.1, 2.4, 2.4])
+table(doc, ['No.', 'Document', 'File', 'Rev', 'Supersedes', 'Status'], REGISTER, [0.9, 4.6, 5.4, 1.1, 2.6, 2.4])
 
 heading('3. Superseded and withdrawn submissions')
 doc.add_paragraph('The following earlier submissions shall not be used for review, procurement or construction:')
 table(doc, ['Document', 'Status'], WITHDRAWN, [13, 4])
 
-heading('4. Changes from the Rev 1 (SICAM A8000) submission')
+heading('4. Changes from the original submission')
 for c in CHANGES:
     doc.add_paragraph(c, style='List Bullet')
 
 heading('5. Coordination')
 doc.add_paragraph('All documents in this package use the same device names, tags, I/O module quantities and signal totals. They were checked '
                   'against each other before issue, and none refers to the withdrawn Schneider Electric architecture except to withdraw it.')
-
-heading('6. Open items')
-doc.add_paragraph('The design is complete in structure. Supplier data still awaited (EMS and PLC box point tables, generator controller and relay '
-                  'models, terminal schedules, Siemens confirmation of the hot standby function and two product numbers) is listed in section 14 '
-                  'of the Design Report. None of these items changes the architecture.')
 
 doc.add_paragraph()
 sig = doc.add_table(rows=4, cols=2)

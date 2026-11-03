@@ -2,7 +2,7 @@
 
 **Project:** Solarization Villa Somalia · **Client:** Ministry of Energy & Water Resources – Somalia
 **Contractor:** Blueflag Energy Co. Ltd · **Drawing set analysed:** BFE/PR/26/01 (`VILLA_SOMALIA_05_10_2026.pdf`, 25 sheets)
-**Status:** HMI V3.1 – aligned with *Villa Somalia SCADA Design Report* Rev 3 and *Device and I/O List* Rev 3 (Blueflag), Siemens SICAM A8000, the selected architecture (RFA-001/BRA/26 Issue H). Rev 2 on Schneider Electric is withdrawn. Where this note and the design report differ, the design report governs.
+**Status:** HMI V3.1 – aligned with *Villa Somalia SCADA Design Report* Rev 1 and *Device and I/O List* Rev 1 (Blueflag, first revision), Siemens SICAM A8000, the selected architecture (RFA-001/BRA/26 Issue H). The Schneider Electric alternative is withdrawn. Where this note and the design report differ, the design report governs.
 
 ---
 
@@ -36,12 +36,12 @@
 
 | # | Client requirement | Answer | Status |
 |---|---|---|---|
-| 1 | Complete SCADA design aligned with BESS and PV, GIS combiner, LVDBs, generators | Design report Rev 3 + the HMI in `hmi/` (17 screens: overview, 11 kV switchboard, President and PM stations, PV, battery, generators, energy management, auxiliaries, alarms, event log, trends, reports, communication status, I/O list, users, simulation) | **Done** |
-| 2 | Complete I/O list – all analogue and digital signals: VCBs, GIS relays, transformers, RMUs, DGs, combiner panels, weather station, UPS, aux power, fire | `docs/Rev3_Submission/Villa_Somalia_SCADA_Device_and_IO_List_Rev3.xlsx`: **244 hardwired points** (208 DI, 32 DO, 4 AI) on six SICAM I/O rows with module and channel, and **463 communication points** (440 read, 23 write) with a tag per point on the *Comms Point List* sheet. The HMI loads the same 707 tags (`tools/import_io_list.py`) | **Done** – register addresses to be filled from vendor maps |
+| 1 | Complete SCADA design aligned with BESS and PV, GIS combiner, LVDBs, generators | Design report Rev 1 + the HMI in `hmi/` (17 screens: overview, 11 kV switchboard, President and PM stations, PV, battery, generators, energy management, auxiliaries, alarms, event log, trends, reports, communication status, I/O list, users, simulation) | **Done** |
+| 2 | Complete I/O list – all analogue and digital signals: VCBs, GIS relays, transformers, RMUs, DGs, combiner panels, weather station, UPS, aux power, fire | `docs/Submission_Rev1/Villa_Somalia_SCADA_Device_and_IO_List_Rev1.xlsx`: **244 hardwired points** (208 DI, 32 DO, 4 AI) on six SICAM I/O rows with module and channel, and **463 communication points** (440 read, 23 write) with a tag per point on the *Comms Point List* sheet. The HMI loads the same 707 tags (`tools/import_io_list.py`) | **Done** – register addresses to be filled from vendor maps |
 | 3 | Communication architecture, protocols, topology, cybersecurity | Design report sections 7–9; *SYSTEM → Communication status* screen; §4 below | **Done** – for approval |
 | 4 | Data sheets for controllers, field devices, servers, HMI; operational sequence | Design report sections 5–6 (equipment and EMS rules) and §5–6 below | Sequences **done**; vendor data sheets to be attached |
 
-### Point count (I/O list Rev 3)
+### Point count (I/O list Rev 1)
 
 | | DI | DO | AI | AO / write | Total |
 |---|---:|---:|---:|---:|---:|
@@ -136,7 +136,7 @@ Per design report section 5 and the *Device List* sheet: SICAM A8000 CP-8050 and
 ## 7. HMI design notes
 
 * Muted background; colour is used for state and alarms. Breaker convention **red = closed, green = open**, as on the DHYBRID screens already used on site. Live conductors dark blue, dead grey.
-* **Every tag name on the screens is the tag in I/O list Rev 3** (for example `AH1-CB-CLSD`, `BESS-SOC`, `EMS-GEN-START-SP`); hovering a signal shows its tag.
+* **Every tag name on the screens is the tag in I/O list Rev 1** (for example `AH1-CB-CLSD`, `BESS-SOC`, `EMS-GEN-START-SP`); hovering a signal shows its tag.
 * Every value carries a quality flag: bad or stale data shows `###` in magenta (demonstrated by cutting the fibre to the PM station).
 * **Three alarm levels** (1 critical, 2 major, 3 minor) taken from the I/O list; alarm banner, acknowledge per alarm or all, cleared-unacknowledged state, event log with the user who acted.
 * **Two roles:** Operator (view, acknowledge, switch breakers, start/stop generators in manual, reset level 3 faults) and Admin (all of that plus EMS mode and setpoints, C-rate limit, generator mode, inverter commands, users, VPN, exports).
