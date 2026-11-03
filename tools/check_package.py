@@ -1,9 +1,9 @@
-"""Coordination check of the Rev 3 resubmission package (docs/Rev3_Submission).
+"""Coordination check of the Rev 1 resubmission package (docs/Submission_Rev1).
 
 Fails if a document refers to the withdrawn Schneider architecture other than to withdraw it, if a document
 points to an old revision, if the signal and module totals disagree, or if a referenced file is missing.
 
-Usage: python3 tools/check_rev3_package.py [package_dir]
+Usage: python3 tools/check_package.py [package_dir]
 """
 import os
 import re
