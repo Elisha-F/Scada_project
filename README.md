@@ -4,12 +4,11 @@ SCADA screens, I/O list and design documents for the **Solarization Villa Somali
 PV + battery + diesel microgrid (Ministry of Energy & Water Resources – Somalia, EPC Blueflag
 Energy, drawing set BFE/PR/26/01).
 
-The HMI follows Blueflag's **SCADA Design Report Rev 2** and **Device and I/O List Rev 2** on the
-**Schneider Electric** platform: two Modicon M580 controllers in hot standby, a Modicon X80 remote drop
-in the switchroom and Modicon Edge I/O NTS islands at the office stations, BESS yard and generator area,
-EcoStruxure Machine SCADA Expert on two SCADA stations (Modbus TCP to the controllers), embedded battery
-EMS for dispatch, two user roles (Operator, Admin), three alarm levels, hardwired-only emergency stop.
-Every signal on the screens is a tag of the I/O list.
+The HMI follows Blueflag's **SCADA Design Report Rev 3** and **Device and I/O List Rev 3** on the
+selected **Siemens SICAM A8000** architecture (confirmed in reply to RFA-001/BRA/26 Issue H): two CP-8050
+controllers in hot standby, six SICAM I/O rows, SICAM SCC on two redundant servers by IEC 60870-5-104,
+embedded battery EMS for dispatch, two user roles (Operator, Admin), three alarm levels, hardwired-only
+emergency stop. Every signal on the screens is a tag of the I/O list.
 
 ## Run it
 
@@ -28,7 +27,7 @@ filled straight away.
 | AUXILIARIES | Auxiliary transformer and LV board, UPS, DC supplies, switchroom, emergency stops, doors |
 | ALARMS | Alarm list (levels 1–3), event log |
 | TRENDS & REPORTS | Trends of any measured tag, daily report |
-| SYSTEM | Communication status, I/O list (706 tags, CSV export), user management, simulation |
+| SYSTEM | Communication status, I/O list (707 tags, CSV export), user management, simulation |
 
 Click a breaker to open its faceplate (status, measurements, live interlocks); commands use
 select-before-operate. Log in as Operator or Admin under **SYSTEM → User management**. The
@@ -37,31 +36,45 @@ emergency stop, generator fail-to-start, inverter faults, PM fibre cut…).
 
 ## Documents
 
-* `docs/Villa_Somalia_SCADA_Design_Report_Rev2.docx` – design report Rev 2, Schneider Electric platform.
-* `docs/Villa_Somalia_SCADA_Device_and_IO_List_Rev2.xlsx` – device and I/O list Rev 2 (Attachment B): 244 hardwired signals with I/O location, Schneider module and channel; 462 communication points on the *Comms Point List* sheet.
-* `docs/Villa_Somalia_SCADA_Attachment_E_HMI_Screens.pdf` – Attachment E, the HMI screen mock-ups (12 screens); captures in `docs/Attachment_E_Screens/`.
-* `docs/Villa_Somalia_IO_Allocation_Schneider_Requote.xlsx` – I/O allocation and the changes against Schneider's offer of 16 Oct 2026, for their requote.
-* `docs/SCADA_Design_Basis.md` – drawing analysis, client comments traceability, drawing-review findings.
-* `docs/figures/` – report figures (`*_se` for the Schneider design).
-* `docs/source/` – Blueflag's rev 0 originals, unchanged.
-* `docs/BFE-PR-26-01-SCADA-Drawing-Set_SICAM.pdf` – Attachment A drawings BFE/PR/26/01-SCADA-001 to 005 (architecture, communication network, PV interface, BESS interface, overview SLD) for the SICAM A8000 design (Rev 1); sources in `docs/drawings/`.
-* `docs/Villa_Somalia_SCADA_Bill_of_Material_SICAM.xlsx` – bill of material for the SICAM A8000 design, by panel and by order line, with I/O check, equipment by others and services.
-* `docs/superseded/` – Rev 1 report and I/O list on the Siemens SICAM A8000 platform, replaced by Rev 2.
+**`docs/Rev3_Submission/` is the package for submission**, one coordinated set on SICAM A8000:
 
-Rebuild everything from the rev 0 originals:
+| File | Document |
+|---|---|
+| `Villa_Somalia_SCADA_Resubmission_Transmittal_RFA-001.docx` / `.pdf` | Cover letter and document register for the reply to RFA-001/BRA/26 Issue H |
+| `Villa_Somalia_SCADA_Design_Report_Rev3.docx` / `.pdf` | SCADA Design Report Rev 3 |
+| `BFE-PR-26-01-SCADA-Drawing-Set_RevB.pdf` | Attachment A: drawings SCADA-001 to 005 Rev B (sources in `docs/drawings/`) |
+| `Villa_Somalia_SCADA_Device_and_IO_List_Rev3.xlsx` | Attachment B: device and I/O list, 244 hardwired signals, 463 communication points |
+| `Villa_Somalia_SCADA_Attachment_E_HMI_Screens_Rev3.pdf` | Attachment E: HMI screen mock-ups (captures in `docs/Attachment_E_Screens/`) |
+| `Villa_Somalia_SCADA_Bill_of_Material_RevB.xlsx` | Attachment F: bill of material by panel and by order line |
+
+Attachments C (datasheets) and D (panel layouts) are still to follow.
+
+Other folders:
+
+* `docs/superseded/` – Rev 1 report and I/O list, drawings Rev A, bill of material Rev A (SICAM, superseded by Rev 3).
+* `docs/superseded/Rev2_Schneider_WITHDRAWN/` – the Schneider Electric Rev 2 documents, **withdrawn, not to be used**.
+* `docs/SCADA_Design_Basis.md` – drawing analysis, client comments traceability, drawing-review findings.
+* `docs/Presentation_Demo_Script.md` – running order for the HMI demonstration.
+* `docs/figures/` – report figures. `docs/source/` – Blueflag's rev 0 originals, unchanged.
+
+Rebuild the package from the rev 0 originals, then check that it is coordinated:
 
 ```
 python3 tools/harmonize_io_list.py docs/source/Villa_Somalia_SCADA_Device_and_IO_List_rev0.xlsx docs/superseded/Villa_Somalia_SCADA_Device_and_IO_List_Rev1.xlsx
 python3 tools/revise_report.py docs/source/Villa_Somalia_SCADA_Design_Report_rev0.docx docs/superseded/Villa_Somalia_SCADA_Design_Report_Rev1.docx
-python3 tools/convert_io_list_schneider.py docs/superseded/Villa_Somalia_SCADA_Device_and_IO_List_Rev1.xlsx docs/Villa_Somalia_SCADA_Device_and_IO_List_Rev2.xlsx
-python3 tools/import_io_list.py                       # HMI tags from Rev 2
-python3 tools/draw_report_figures_schneider.py docs/figures && node tools/svg_to_png.js docs/figures/*_se.svg
+P=docs/Rev3_Submission
+python3 tools/make_rev3_io_list.py docs/superseded/Villa_Somalia_SCADA_Device_and_IO_List_Rev1.xlsx $P/Villa_Somalia_SCADA_Device_and_IO_List_Rev3.xlsx
+python3 tools/make_rev3_report.py docs/superseded/Villa_Somalia_SCADA_Design_Report_Rev1.docx $P/Villa_Somalia_SCADA_Design_Report_Rev3.docx
+python3 tools/import_io_list.py                       # HMI tags from Rev 3
 node tools/capture_screens.js && node tools/build_attachment_e.js
-python3 tools/convert_report_schneider.py docs/superseded/Villa_Somalia_SCADA_Design_Report_Rev1.docx docs/Villa_Somalia_SCADA_Design_Report_Rev2.docx
-python3 tools/draw_drawings_sicam.py docs/drawings && node tools/svgs_to_pdf.js docs/BFE-PR-26-01-SCADA-Drawing-Set_SICAM.pdf docs/drawings/*.svg
-python3 tools/build_bom_sicam.py docs/Villa_Somalia_SCADA_Bill_of_Material_SICAM.xlsx
-python3 tools/schneider_io_allocation.py docs/superseded/Villa_Somalia_SCADA_Device_and_IO_List_Rev1.xlsx docs/Villa_Somalia_IO_Allocation_Schneider_Requote.xlsx
+python3 tools/draw_drawings_sicam.py docs/drawings && node tools/svgs_to_pdf.js $P/BFE-PR-26-01-SCADA-Drawing-Set_RevB.pdf docs/drawings/*.svg
+python3 tools/build_bom_sicam.py
+python3 tools/build_transmittal_rev3.py
+soffice --headless --convert-to pdf --outdir $P $P/*.docx
+python3 tools/check_rev3_package.py
 ```
+
+The Schneider tools (`tools/*schneider*.py`) only rebuild the withdrawn Rev 2 and are kept for the record.
 
 ## Structure
 
@@ -70,7 +83,7 @@ hmi/index.html              shell (header, navigation, alarm banner, footer)
 hmi/css/scada.css           style
 hmi/js/config.js            plant data from the drawings and EMS thresholds
 hmi/js/model.js             internal simulator model
-hmi/js/iolist.js            the 706 tags of I/O list Rev 2 (generated: tools/import_io_list.py)
+hmi/js/iolist.js            the 707 tags of I/O list Rev 3 (generated: tools/import_io_list.py)
 hmi/js/taglist.js           tag database built from iolist.js
 hmi/js/sim.js               plant simulator and EMS rules
 hmi/js/control.js           users, permissions, interlocks, commands, event log
@@ -81,9 +94,9 @@ hmi/js/screens/*.js         the screens
 ```
 
 Screens read and write only the I/O list tags (`SCADA.tags`). In service, `sim.js`, `model.js`
-and `bind.js` are replaced by the driver feeding those tags from the M580 controllers, without changing
+and `bind.js` are replaced by the driver feeding those tags from the CP-8050 controllers, without changing
 the screens. After any change to the I/O list, regenerate the tags:
 
 ```
-python3 tools/import_io_list.py docs/Villa_Somalia_SCADA_Device_and_IO_List_Rev2.xlsx hmi/js/iolist.js
+python3 tools/import_io_list.py docs/Rev3_Submission/Villa_Somalia_SCADA_Device_and_IO_List_Rev3.xlsx hmi/js/iolist.js
 ```

@@ -161,7 +161,7 @@ def sheet(no, title, subtitle, body, legend, notes, legend_extra=''):
     y0 = 188
     s.append(f'<line x1="{X0}" y1="{y0}" x2="{W - 5}" y2="{y0}" stroke="{INK}" stroke-width="0.3"/>')
     rt, _ = table(cx, y0 + 1.5, [8, cw - 30, 22], ['REV', 'DESCRIPTION', 'DATE'],
-                  [['A', 'Issued for client approval – SICAM A8000 design', '16-OCT-2026'], ['', '', ''], ['', '', '']], size=1.6)
+                  [['A', 'Issued for client approval – SICAM A8000 design', '16-OCT-2026'], ['B', 'Re-issued with Design Report Rev 3; SICAM A8000 confirmed', '03-NOV-2026'], ['', '', '']], size=1.6)
     s.append(rt)
     yb = 210
     blocks = [('CLIENT:', ['MINISTRY OF ENERGY & WATER RESOURCES – SOMALIA', 'SITE: VILLA SOMALIA']), ('CONTRACTOR:', ['BLUEFLAG ENERGY CO. LTD']),
@@ -178,14 +178,14 @@ def sheet(no, title, subtitle, body, legend, notes, legend_extra=''):
     s.append(t(X0 + (W - 5 - X0) / 2, yb + 11.8, subtitle, 1.8, 400, GREY, 'middle'))
     yb += 14
     s.append(f'<line x1="{X0}" y1="{yb}" x2="{W - 5}" y2="{yb}" stroke="{INK}" stroke-width="0.3"/>')
-    s.append(t(cx, yb + 3.4, 'SCALE: NTS', 1.7) + t(cx + 26, yb + 3.4, 'DATE: 16-OCT-2026', 1.7) + t(W - 7, yb + 3.4, 'SIZE: A3', 1.7, anchor='end'))
+    s.append(t(cx, yb + 3.4, 'SCALE: NTS', 1.7) + t(cx + 26, yb + 3.4, 'DATE: 03-NOV-2026', 1.7) + t(W - 7, yb + 3.4, 'SIZE: A3', 1.7, anchor='end'))
     yb += 5
     for lab in ('DESIGNED', 'DRAWN', 'CHECKED', 'APPROVED'):
         s.append(f'<line x1="{X0}" y1="{yb}" x2="{W - 5}" y2="{yb}" stroke="{INK}" stroke-width="0.2"/>')
-        s.append(t(cx, yb + 3.2, lab, 1.6) + f'<line x1="{cx + 52}" y1="{yb}" x2="{cx + 52}" y2="{yb + 4.6}" stroke="{INK}" stroke-width="0.2"/>' + t(cx + 54, yb + 3.2, 'SIGN', 1.4, 400, GREY))
+        s.append(t(cx, yb + 3.2, lab, 1.6) + (t(cx + 26, yb + 3.4, 'E. M.', 2.4, 700) if lab == 'DESIGNED' else '') + f'<line x1="{cx + 52}" y1="{yb}" x2="{cx + 52}" y2="{yb + 4.6}" stroke="{INK}" stroke-width="0.2"/>' + t(cx + 54, yb + 3.2, 'SIGN', 1.4, 400, GREY))
         yb += 4.6
     s.append(f'<line x1="{X0}" y1="{yb}" x2="{W - 5}" y2="{yb}" stroke="{INK}" stroke-width="0.4"/>')
-    s.append(t(cx, yb + 4.6, 'DRW NO.', 1.6, 400, GREY) + t(cx + 13, yb + 4.6, f'BFE/PR/26/01-SCADA-{no:03d}', 2.2, 700) + t(W - 7, yb + 4.6, 'REV A', 2.2, 700, anchor='end'))
+    s.append(t(cx, yb + 4.6, 'DRW NO.', 1.6, 400, GREY) + t(cx + 13, yb + 4.6, f'BFE/PR/26/01-SCADA-{no:03d}', 2.2, 700) + t(W - 7, yb + 4.6, 'REV B', 2.2, 700, anchor='end'))
     assert yb + 7 <= H - 5, ('title column overflow', yb)
     s.append('</svg>')
     return '\n'.join(s)

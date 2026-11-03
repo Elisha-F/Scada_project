@@ -1,4 +1,4 @@
-"""Attachment A drawing set BFE/PR/26/01-SCADA-001 to 005 for the SICAM A8000 design (report and I/O list Rev 1).
+"""Attachment A drawing set BFE/PR/26/01-SCADA-001 to 005 for the SICAM A8000 design (report and I/O list Rev 3).
 
 Usage: python3 tools/draw_drawings_sicam.py <out_dir>
 Writes BFE-PR-26-01-SCADA-00n.svg (A3, mm); build the PDF with node tools/svgs_to_pdf.js.
@@ -125,7 +125,7 @@ for i, (head, sw, items) in enumerate(COLS):
     b += s
 svg = sheet(1, 'SCADA ARCHITECTURE', 'System overview by level and location', b,
             ['eth', 'fo', 'busa', 'busb', 'iolink', 'hsby', 'rs485', 'hw', 'plc', 'vpn', STRIPE_SYM, ZONE_SYM],
-            ['Architecture as SCADA Design Report Rev 1, sections 4 to 8, and Device and I/O List Rev 1. Device names and tags are used unchanged on sheets 002 to 005, the HMI and the I/O list.',
+            ['Architecture as SCADA Design Report Rev 3, sections 4 to 8, and Device and I/O List Rev 3. Device names and tags are used unchanged on sheets 002 to 005, the HMI and the I/O list.',
              'The embedded EMS dispatches PV, battery and generators. The CP-8050 pair monitors, executes breaker commands with interlocks and passes Admin settings to the EMS; it does not dispatch.',
              'CP-8050 A is active and B hot standby. Siemens to confirm the redundancy function and licence, the switchover time and the I/O row connection to both controllers (open point 12).',
              'Protection trips stay in the relays. Emergency stop and fire trips are hardwired and act directly on the equipment; the SCADA only shows them.',
@@ -273,7 +273,7 @@ ta, ha = table(184, 9, [9, 57, 15, 34, 29], ['Dir.', 'Signal (I/O list tags)', '
     ['IN', 'Inverter transformer alarms and trips (T-INV-*)', 'DI', 'Row 5', 'event, 1 ms'],
     ['IN', 'AH2 measurements, trips, events (AH2-*)', 'AI/DI com', 'Relay AH2', '1 s / event']], size=1.5, title='TABLE A – SIGNAL EXCHANGE (PER INVERTER UNLESS STATED)')
 b += ta
-b += tw(184, 9 + ha + 3.2, 'Signal count (I/O list Rev 1): 12 hardwired DI · 94 read and 8 write communication points (inverters, PLC box, weather station) · plus relay AH2.', 144, 1.55, fill=GREY)[0]
+b += tw(184, 9 + ha + 3.2, 'Signal count (I/O list Rev 3): 12 hardwired DI · 94 read and 8 write communication points (inverters, PLC box, weather station) · plus relay AH2.', 144, 1.55, fill=GREY)[0]
 tb2, hb = table(184, 9 + ha + 9, [38, 106], ['Function', 'Description'], [
     ['Curtailment', 'The EMS limits the inverters through the PLC box when the battery is full or a generator would fall below minimum load; ramped, not tripped. The SCADA shows it (EMS-PV-CURT).'],
     ['Writes from the SCADA', 'Power limit and start / stop: Admin role only, and only if the EMS supplier allows remote writes (open point 1); otherwise display only.'],
@@ -288,7 +288,7 @@ svg = sheet(3, 'PV INTERFACE', 'Signal exchange, control and scope boundary', b,
              'Inverters communicate by power line communication over the AC cables to the PLC box, then Ethernet to SW-MV. The blue\'Log XM serves the weather station only.',
              'PV dispatch and curtailment stay with the EMS. The SCADA writes only settings the EMS supplier permits, Admin role only.',
              'Update rates are proposals, to be fixed with the PLC box register map.',
-             'Tags as in the I/O list Rev 1 (NB01 … NB04, PLCBOX-, PV-, T-INV-, WS-).'])
+             'Tags as in the I/O list Rev 3 (NB01 … NB04, PLCBOX-, PV-, T-INV-, WS-).'])
 save(3, svg)
 
 # ===================================================================== 004 BESS interface
@@ -348,7 +348,7 @@ ta, ha = table(184, 9, [9, 64, 15, 28, 28], ['Dir.', 'Signal (I/O list tags)', '
     ['IN', 'AH3 measurements, trips, events (AH3-*)', 'AI/DI com', 'Relay AH3', '1 s / event']], size=1.45, title='TABLE A – SIGNAL EXCHANGE SCADA ↔ BESS')
 b += ta
 y = 9 + ha + 2.8
-b += tw(184, y, 'Signal count (I/O list Rev 1): 12 hardwired DI · 41 read and 9 write communication points (battery and EMS) · plus relay AH3.', 144, 1.5, fill=GREY)[0]
+b += tw(184, y, 'Signal count (I/O list Rev 3): 12 hardwired DI · 41 read and 9 write communication points (battery and EMS) · plus relay AH3.', 144, 1.5, fill=GREY)[0]
 tb2, hb = table(184, y + 4.5, [30, 36, 42, 36], ['Mode', 'Battery', 'PV', 'Generators'], [
     ['Day, PV surplus', 'Forms the grid, charging', 'Full; curtailed when the battery is full', 'Off'],
     ['Day, PV shortfall / night', 'Forms the grid, discharging', 'Full / off', 'Off'],
@@ -370,7 +370,7 @@ svg = sheet(4, 'BESS INTERFACE', 'Signal exchange, modes and scope boundary', b,
              'The EMS dispatches; thresholds (start below 20 %, stop at 80 %, second generator above 80 % load) are proposed starting values, set with the EMS supplier.',
              'The SCADA never releases or resets the fire suppression; it monitors only. Hardwired trips act without the controllers or communication.',
              'Update rates are proposals, to be fixed with the EMS point table (open point 1).',
-             'Tags as in the I/O list Rev 1 (BESS-, EMS-, FIRE-, ESTOP-BESS, DOOR-BESS).'])
+             'Tags as in the I/O list Rev 3 (BESS-, EMS-, FIRE-, ESTOP-BESS, DOOR-BESS).'])
 save(4, svg)
 
 # ===================================================================== 005 SCADA overview SLD
@@ -414,7 +414,7 @@ legend5 = [('<rect x="{x}" y="{y}" width="4" height="3" fill="#d22f27"/>', 'Brea
 svg = sheet(5, 'SCADA OVERVIEW SLD', 'HMI overview screen and signal reference', b, legend5,
             ['Screen captured from the HMI demonstration (hmi/index.html). Values are simulated and for illustration only.',
              'Layout follows the overall SLD and 11 kV switchgear configuration of BFE/PR/26/01.',
-             'Tags follow the Device and I/O List Rev 1.',
+             'Tags follow the Device and I/O List Rev 3.',
              'Breaker status comes from hardwired auxiliary contacts and is confirmed by the relay. Operators verify the position locally before working on equipment.',
              'The final screens are built in SICAM SCC to the same layout and content.'])
 save(5, svg)

@@ -1,7 +1,7 @@
-"""Bill of material for the SICAM A8000 design (Rev 1 architecture, drawing set BFE/PR/26/01-SCADA-001 to 005).
+"""Bill of material for the SICAM A8000 design (Attachment F to SCADA Design Report Rev 3, drawings BFE/PR/26/01-SCADA-001 to 005 Rev B).
 
 Usage: python3 tools/build_bom_sicam.py [out.xlsx]
-Quantities follow the Device and I/O List Rev 1 (docs/superseded); prices are entered once on the Summary sheet.
+Quantities follow the Device and I/O List Rev 3; prices are entered once on the Summary sheet.
 """
 import sys
 
@@ -9,7 +9,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
-OUT = sys.argv[1] if len(sys.argv) > 1 else 'docs/Villa_Somalia_SCADA_Bill_of_Material_SICAM.xlsx'
+OUT = sys.argv[1] if len(sys.argv) > 1 else 'docs/Rev3_Submission/Villa_Somalia_SCADA_Bill_of_Material_RevB.xlsx'
 
 NAVY, AMBER, GREY, YELLOW, BAND = '14263D', 'E8A33B', 'EEF1F4', 'FFF2CC', 'DCE6F0'
 THIN = Side(style='thin', color='C9D0D8')
@@ -105,7 +105,7 @@ P = [
     ]),
     ('P2', 'Control room (SCADA servers, operator and engineering stations)', 'Control room', [
         ('IPC', 2, 'SRV-A, SRV-B', 'Server A active, B hot standby.'),
-        ('RACK', 1, 'Server rack', 'Not in the Device List Rev 1; needed to house the rack servers and UPS. Confirm the room.'),
+        ('RACK', 1, 'Server rack', 'Device List D52. Houses the rack servers and UPS. Confirm the room.'),
         ('OWS', 1, 'OWS-01', ''),
         ('MON', 2, 'OWS-01', 'Two monitors.'),
         ('LAP', 1, 'ENG-01', ''),
@@ -120,7 +120,7 @@ P = [
         ('FSW', 1, 'SW-PRS', ''),
         ('SFP', 2, 'SW-PRS ring ports', ''),
         ('MGATE', 1, 'MGate-PRS', 'ST260E RMU relay, RS485.'),
-        ('PSU5', 1, 'Panel 24 V', 'Smaller than the 20 A unit in the Device List, which is oversized here.'),
+        ('PSU5', 1, 'Panel 24 V', 'Device List D51. A 20 A unit would be oversized here.'),
         ('PM5560', 1, 'PM5560-PRS', 'Mounted in the LVDB.'),
         ('FSB', 1, 'Fibre termination', ''),
         ('AX', 1, 'Row 3 panel', ''),
@@ -166,7 +166,7 @@ P = [
         ('SFP', 2, 'SW-MV ring ports', ''),
         ('PSU5', 1, 'Enclosure 24 V', ''),
         ('FSB', 1, 'Fibre termination', ''),
-        ('AXS', 1, 'SW-MV enclosure', 'Not in the Device List Rev 1. Omit if the switch fits in the PLC box cabinet.'),
+        ('AXS', 1, 'SW-MV enclosure', 'Device List D53. Omit if the switch fits in the PLC box cabinet.'),
         ('ACC_P', 1, 'SW-MV enclosure', ''),
     ]),
     ('C', 'Cables and passive network material (site-wide; lengths from the cable route drawings)', 'Site', [
@@ -227,7 +227,7 @@ SERVICES = [
     ('Warranty and remote support, 2 years', 'lot'),
 ]
 
-IO_ROWS = [  # row, location, interface, modules (type, qty, channels), used signals (I/O list Rev 1)
+IO_ROWS = [  # row, location, interface, modules (type, qty, channels), used signals (I/O list Rev 3)
     (1, '11 kV switchroom', 'CI-8532', [('DI-8112', 5, 16), ('DO-8221', 2, 12), ('DO-8212', 1, 8)], 87),
     (2, 'SCADA cabinet', 'CI-8532', [('DI-8112', 2, 16), ('AI-8320', 1, 4)], 25),
     (3, 'President station', 'CI-8533', [('DI-8112', 3, 16), ('DO-8221', 1, 12)], 43),
@@ -271,8 +271,8 @@ rm.column_dimensions['B'].width = 110
 lines = [
     ('Villa Somalia Hybrid Plant: SCADA Bill of Material', None),
     ('Project', 'Solarization of Villa Somalia, Mogadishu. 1,516 kWp PV, 3,340 kWh BESS, 2 diesel generators, 11 kV switchboard, 2 office transformer stations.'),
-    ('Basis', 'SICAM A8000 design: SCADA Design Report Rev 1, Device and I/O List Rev 1, drawing set BFE/PR/26/01-SCADA-001 to 005.'),
-    ('Status', 'Rev A, 22 Oct 2026, for pricing and supplier quotations. Quantities fixed by the design; prices to be entered.'),
+    ('Basis', 'Siemens SICAM A8000, the selected architecture (RFA-001/BRA/26 Issue H): SCADA Design Report Rev 3, Device and I/O List Rev 3, drawings BFE/PR/26/01-SCADA-001 to 005 Rev B.'),
+    ('Status', 'Rev B, 3 Nov 2026: Attachment F to the Design Report Rev 3, for pricing and supplier quotations. Supersedes Rev A. Quantities fixed by the design; prices to be entered.'),
     ('Architecture', 'Two CP-8050 in hot standby; six I/O rows (24 modules, 244 hardwired signals, 27 % spare); SICAM SCC on two servers by IEC 60870-5-104; '
                      'managed fibre ring of 7 switches; one firewall with VPN off by default; GPS time.'),
     ('Sheets', None),
@@ -292,8 +292,8 @@ lines = [
           'rows to the 24 V variants (CI-8531, DI-8110) fed from the SITOP.'),
     ('2', 'Siemens to confirm: CI-8533 and DO-8221 ordering numbers, the hot standby function and licence, switchover time, and how the I/O rows connect to both controllers.'),
     ('3', 'Network ordering codes (Moxa, Fortinet, Meinberg) are from memory. Siemens SCALANCE equivalents may be offered instead; keep the same port counts.'),
-    ('4', 'Field switches at the stations and yard use a 5 A SITOP instead of the 20 A unit of the Device List, which is oversized for one switch and one gateway.'),
-    ('5', 'Two items not in the Device List Rev 1 are added: a 19-inch server rack with console for the control room, and a small enclosure for SW-MV.'),
+    ('4', 'Field switches at the stations, yard and MV station use a 5 A SITOP (Device List D51); the 20 A unit (D40) is only in the SCADA cabinet.'),
+    ('5', 'The server rack with console (D52) and the SW-MV enclosure (D53) were added to the Device List in Rev 3 to match this bill of material.'),
     ('6', 'Cable and fibre lengths are left open until the cable route drawings are available.'),
     ('7', 'Currency and prices: enter in the Summary sheet. Totals calculate automatically.'),
 ]
@@ -383,7 +383,7 @@ bp.freeze_panes = 'C3'
 
 # ---------------------------------------------------------------- I/O Check
 io = wb.create_sheet('IO Check')
-io['A1'] = 'I/O modules against the hardwired signals of the I/O list Rev 1'
+io['A1'] = 'I/O modules against the hardwired signals of the I/O list Rev 3'
 io['A1'].font = Font(bold=True, size=14, color=NAVY)
 head(io, 2, ['Row', 'Location', 'Interface', 'Modules', 'Module count', 'Channels', 'Signals used', 'Spare', 'Spare %', 'Remark'],
      [6, 24, 12, 44, 13, 10, 13, 9, 9, 60])

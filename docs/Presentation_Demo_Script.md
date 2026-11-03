@@ -7,7 +7,7 @@ About 10 minutes, during slide 9 of the deck. The HMI runs on a plant simulator;
 1. Open `hmi/index.html` in Chrome (no install, no server).
 2. SYSTEM → User management: log in as **Admin**.
 3. SYSTEM → Simulation: speed **×60**, then CLEAR (clear all simulated faults).
-4. Do **not** open SYSTEM → Communication status: it still shows the Schneider controller (Rev 2), not the SICAM A8000 pair.
+4. SYSTEM → Communication status shows the CP-8050 hot standby pair and the six I/O rows; it can be shown.
 5. Rehearse step 3 once to see how long the battery takes to reach 20 %.
 
 ## Running order
