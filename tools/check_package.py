@@ -23,7 +23,7 @@ FILES = {
     'transmittal': 'Villa_Somalia_SCADA_Resubmission_Transmittal_RFA-001.docx',
 }
 SCHNEIDER = r'M580|Modicon|BMEH|BMEXBP|BMX[A-Z]|EcoStruxure|Machine SCADA|Edge I/O|\bNTS[A-Z0-9]|\bX80\b|Control Expert|EtherNet/IP|BMECRA'
-OLD_REV = r'_Rev[23]\b|Rev ?3\b|Rev 2\b|Attachment[ _][EF]\b|RevA\b|Drawing-Set_SICAM|Bill_of_Material_SICAM|HMI_Screens\.pdf|24 V/5 A|6EP1333'
+OLD_REV = r'_Rev[23]\b|Rev ?3\b|Rev 2\b|Attachment[ _][EF]\b|RevA\b|Drawing-Set_SICAM|Bill_of_Material_SICAM|HMI_Screens\.pdf|24 V/5 A|6EP13|SITOP|[Oo]pen points?\b|section 14\b|sections 13 and 14'
 WITHDRAW_CONTEXT = re.compile(r'withdraw|Withdrawn|Rev 2|alternative', re.I)
 
 fails, notes = [], []
@@ -93,11 +93,11 @@ if 'Attachment C' not in text.get('hmi', '') or re.search(r'\bE\.\d', text.get('
     fails.append('HMI screens not titled Attachment C throughout')
 if re.search(r'open point|open item', text.get('transmittal', ''), re.I):
     fails.append('transmittal mentions open points')
-psu = sum(r[7] for r in bom['BOM by Panel'].iter_rows(min_row=3, values_only=True) if r[4] == 'SITOP PSU8200 24 V/20 A' and r[13] != 'SP')
+psu = sum(r[7] for r in bom['BOM by Panel'].iter_rows(min_row=3, values_only=True) if r[4] == 'QUINT4-PS/1AC/24DC/20' and r[13] != 'SP')
 d40 = [r[7] for r in wb['Device List'].iter_rows(min_row=2, values_only=True) if r[0] == 'D40'][0]
-notes.append('24 V/20 A supplies: %d in the bill of material, %d in the Device List' % (psu, d40))
+notes.append('QUINT4 24 V/20 A supplies: %d in the bill of material, %d in the Device List' % (psu, d40))
 if psu != 6 or d40 != 6:
-    fails.append('24 V supplies changed from six 20 A units')
+    fails.append('24 V supplies changed from six Phoenix Contact QUINT4 20 A units')
 if text.get('drawings', '').count('REV B') != 5:
     fails.append('not every drawing sheet is REV B')
 

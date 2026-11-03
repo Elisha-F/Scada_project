@@ -127,10 +127,10 @@ svg = sheet(1, 'SCADA ARCHITECTURE', 'System overview by level and location', b,
             ['eth', 'fo', 'busa', 'busb', 'iolink', 'hsby', 'rs485', 'hw', 'plc', 'vpn', STRIPE_SYM, ZONE_SYM],
             ['Architecture as SCADA Design Report Rev 1, sections 4 to 8, and Device and I/O List Rev 1. Device names and tags are used unchanged on sheets 002 to 005, the HMI and the I/O list.',
              'The embedded EMS dispatches PV, battery and generators. The CP-8050 pair monitors, executes breaker commands with interlocks and passes Admin settings to the EMS; it does not dispatch.',
-             'CP-8050 A is active and B hot standby. Siemens to confirm the redundancy function and licence, the switchover time and the I/O row connection to both controllers (open point 12).',
+             'CP-8050 A is active and B hot standby. Siemens to confirm the redundancy function and licence, the switchover time and the I/O row connection to both controllers.',
              'Protection trips stay in the relays. Emergency stop and fire trips are hardwired and act directly on the equipment; the SCADA only shows them.',
              'Zones are separated by VLANs, separate CI-8520 ports and firewall rules. Only FW-01 connects to the outside, with VPN off by default.',
-             'Quantities, models and open items: report sections 13 and 14.'])
+             'Quantities and models: report section 13 and the bill of material (Attachment D).'])
 save(1, svg)
 
 # ===================================================================== 002 Communication network
@@ -193,7 +193,7 @@ b += ta
 tb2, hb = table(168, 168, [34, 44, 28, 54], ['Bus', 'Devices (Modbus ID)', 'Settings', 'Remark'], [
     ['MGate-PRS port 1', 'ST260E President (1)', '9600 8N1 (to confirm)', 'Shielded twisted pair, 120 Ω at both ends'],
     ['MGate-PMS port 1', 'ST260E Prime Minister (1)', '9600 8N1 (to confirm)', 'As above'],
-    ['MGate-GEN (only if needed)', 'DG1 (1), DG2 (2)', '19200 8N1 (to confirm)', 'Only if the generator controllers are RS485 only (open point 3)']],
+    ['MGate-GEN (only if needed)', 'DG1 (1), DG2 (2)', '19200 8N1 (to confirm)', 'Only if the generator controllers are RS485 only']],
     size=1.55, title='TABLE B – RS485 MODBUS RTU BUSES')
 b += tb2
 tc, hc = table(168, 168 + hb + 3, [34, 126], ['Type', 'Specification'], [
@@ -276,7 +276,7 @@ b += ta
 b += tw(184, 9 + ha + 3.2, 'Signal count (I/O list Rev 1): 12 hardwired DI · 94 read and 8 write communication points (inverters, PLC box, weather station) · plus relay AH2.', 144, 1.55, fill=GREY)[0]
 tb2, hb = table(184, 9 + ha + 9, [38, 106], ['Function', 'Description'], [
     ['Curtailment', 'The EMS limits the inverters through the PLC box when the battery is full or a generator would fall below minimum load; ramped, not tripped. The SCADA shows it (EMS-PV-CURT).'],
-    ['Writes from the SCADA', 'Power limit and start / stop: Admin role only, and only if the EMS supplier allows remote writes (open point 1); otherwise display only.'],
+    ['Writes from the SCADA', 'Power limit and start / stop: Admin role only, and only if the EMS supplier allows remote writes; otherwise display only.'],
     ['Close permissive AH2', 'The 11 kV busbar must be live, formed by the battery or a generator; PV cannot energise the busbar.'],
     ['Loss of the grid former', 'Inverters trip on their own voltage and frequency protection (anti-islanding).'],
     ['PLC box link lost', 'Level 2 alarm; values shown stale (###); commands to the inverters blocked.'],
@@ -284,7 +284,7 @@ tb2, hb = table(184, 9 + ha + 9, [38, 106], ['Function', 'Description'], [
 b += tb2
 assert 184 + hc < 288 and 9 + ha + 9 + hb < 288, (hc, ha, hb)
 svg = sheet(3, 'PV INTERFACE', 'Signal exchange, control and scope boundary', b, ['power', 'dc', 'plc', 'eth', 'fo', 'iolink', 'hw', 'vendor', STRIPE_SYM],
-            ['Ratings from the overall SLD and inverter wiring diagram of BFE/PR/26/01. NB01 is taken as the inverter with 21 strings; confirm (drawing review item 2).',
+            ['Ratings from the overall SLD and inverter wiring diagram of BFE/PR/26/01. NB01 is taken as the inverter with 21 strings; to be confirmed by the PV designer.',
              'Inverters communicate by power line communication over the AC cables to the PLC box, then Ethernet to SW-MV. The blue\'Log XM serves the weather station only.',
              'PV dispatch and curtailment stay with the EMS. The SCADA writes only settings the EMS supplier permits, Admin role only.',
              'Update rates are proposals, to be fixed with the PLC box register map.',
@@ -369,7 +369,7 @@ svg = sheet(4, 'BESS INTERFACE', 'Signal exchange, modes and scope boundary', b,
             ['Ratings from the overall SLD of BFE/PR/26/01: 3.34 MWh LFP 416S8P, 1 MVA 11/0.69 kV, 2 × 400 A to the PCS. PCS and rack count, rating and the EMS make to be confirmed by the vendor.',
              'The EMS dispatches; thresholds (start below 20 %, stop at 80 %, second generator above 80 % load) are proposed starting values, set with the EMS supplier.',
              'The SCADA never releases or resets the fire suppression; it monitors only. Hardwired trips act without the controllers or communication.',
-             'Update rates are proposals, to be fixed with the EMS point table (open point 1).',
+             'Update rates are proposals, to be fixed with the EMS point table.',
              'Tags as in the I/O list Rev 1 (BESS-, EMS-, FIRE-, ESTOP-BESS, DOOR-BESS).'])
 save(4, svg)
 

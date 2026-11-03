@@ -154,7 +154,7 @@ fill(T[26], [
     ['Configured flash card for the CP-8050', '1', 'Controller B is the running spare; the card restores a replaced controller quickly'],
     ['DI-8112, DO-8221, CI-8533, PS-8642', '1 each', 'One of each I/O module type and a controller power supply on site'],
     ['Field switch and fibre transceivers', '1 and 2', 'Network repair'],
-    ['SITOP 24 V/20 A and MGate MB3170', '1 each', 'Field panel repair'],
+    ['QUINT4 24 V/20 A power supply and MGate MB3170', '1 each', 'Field panel repair'],
 ])
 
 # ---------------------------------------------------------------- 14 Attachments
@@ -167,9 +167,25 @@ fill(T[28], [
     ['D', 'Bill of material by panel and by order line, with I/O check and equipment by others (' + BOM + ')', 'Rev 1, for pricing'],
 ])
 
+# ---------------------------------------------------------------- 24 V supplies as in the original submission (Phoenix Contact QUINT4)
+cell(25, 12, 1, 'Siemens SITOP PSU8200 24 V/20 A', 'Phoenix Contact QUINT4-PS/1AC/24DC/20')
+par('Siemens SITOP PSU8200', 'Phoenix Contact QUINT4')
+
+# ---------------------------------------------------------------- no open points in the report
+par('Every client comment is answered in this report or its attachments. Items still awaiting supplier data are listed in section 14.',
+    'Every client comment is answered in this report or its attachments.')
+par('14. Open points and attachments', '14. Attachments')
+for txt in ('The design is complete in structure; the items below will finalise quantities and part numbers. None of them changes the architecture.',
+            'Open points', 'Attachments'):
+    ps = [q for q in d.paragraphs if q.text == txt]
+    assert len(ps) == 1, txt
+    ps[0]._p.getparent().remove(ps[0]._p)
+assert T[27].rows[0].cells[1].text == 'Item' and T[27].rows[1].cells[1].text.startswith('EMS make'), T[27].rows[1].cells[1].text
+T[27]._tbl.getparent().remove(T[27]._tbl)
+
 # ---------------------------------------------------------------- sweep
 text = '\n'.join(p.text for p in all_pars())
-for bad in ('Attachment E', 'Attachment F', 'attachments A to E', 'Datasheets in Attachment', 'X80', 'BMEH', 'BMX', 'Edge I/O', 'EcoStruxure'):
+for bad in ('Attachment E', 'Attachment F', 'attachments A to E', 'Datasheets in Attachment', 'open point', 'Open points', 'section 14', 'SITOP', 'X80', 'BMEH', 'BMX', 'Edge I/O', 'EcoStruxure'):
     assert bad not in text, bad
 assert text.count('M580') == 2 and text.count('Machine SCADA') == 1, (text.count('M580'), text.count('Machine SCADA'))
 d.save(OUT)

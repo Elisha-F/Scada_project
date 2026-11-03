@@ -1,7 +1,7 @@
 """Device and I/O List Rev 1 (first revision): SICAM A8000 confirmed as the selected architecture (RFA-001/BRA/26 Issue H).
 
 Input is the original submission (docs/superseded; headed "Rev 1" inside). Signals, tags, modules, communication
-points and the 24 V supplies are unchanged. The Device List adds the server rack and the SW-MV enclosure, so it
+points and the 24 V supplies (Phoenix Contact QUINT4, as in the original submission) are unchanged. The Device List adds the server rack and the SW-MV enclosure, so it
 matches the bill of material (Attachment D). Change markers left over from before the original submission are removed.
 
 Usage: python3 tools/make_resubmission_io_list.py <original.xlsx> <rev1.xlsx>
@@ -77,6 +77,28 @@ for row in ps.iter_rows():
     for c in row:
         if isinstance(c.value, str) and "'Device List'!" in c.value:
             c.value = c.value.replace('$56', '$%d' % last_dl)
+
+# ---------------------------------------------------------------- 24 V supplies as in the original submission (Phoenix Contact QUINT4)
+r40 = row_of(dl, 1, 'D40')
+dl.cell(r40, 4).value = 'Phoenix Contact'
+dl.cell(r40, 5).value = 'QUINT4-PS/1AC/24DC/20'
+dl.cell(r40, 6).value = '2904602'
+dl.cell(r40, 7).value = 'From memory - confirm'
+dl.cell(r40, 14).value = 'Switches and gateways. Wide-range input, AC or DC; confirm it runs from the 110 V DC station battery.'
+dsh = wb['Datasheets']
+for row in dsh.iter_rows():
+    for c in row:
+        if isinstance(c.value, str) and 'SITOP' in c.value:
+            c.value = {'Siemens': 'Phoenix Contact', 'SITOP PSU8200 24 V/20 A': 'QUINT4-PS/1AC/24DC/20', '6EP1336-3BA10': '2904602'}.get(c.value, c.value)
+for row in dsh.iter_rows():
+    if row[4].value == 'QUINT4-PS/1AC/24DC/20':
+        row[3].value, row[5].value = 'Phoenix Contact', '2904602'
+        row[6].value = 'Datasheet'
+        row[7].value = 'phoenixcontact.com, search the order number 2904602'
+for ws in wb.worksheets:
+    for row in ws.iter_rows():
+        for c in row:
+            assert not (isinstance(c.value, str) and re.search(r'SITOP|6EP13', c.value)), (ws.title, c.coordinate, c.value)
 
 wb.save(OUT)
 print('wrote', OUT, '· Device List to row', last_dl)
