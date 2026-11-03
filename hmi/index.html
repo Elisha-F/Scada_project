@@ -25,7 +25,7 @@
     <span class="ind"><i id="ind-bat"></i>BAT</span>
     <span class="ind"><i id="ind-dg"></i>DG</span>
     <span class="ind"><i id="ind-bus"></i>11kV</span>
-    <span class="ppcstate" title="Power Plant Controller state">PPC: <b id="ppcstate"></b></span>
+    <span class="ppcstate" title="Embedded EMS operating mode">EMS: <b id="emsstate"></b></span>
   </div>
 </div>
 <div id="alarmbanner" class="alarmbanner none" title="Open alarm list">
@@ -44,18 +44,18 @@
 <div id="modal" class="modal"></div>
 
 <script src="js/config.js"></script>
-<script src="js/tags.js"></script>
+<script src="js/model.js"></script>
+<script src="js/iolist.js"></script>
+<script src="js/taglist.js"></script>
 <script src="js/sim.js"></script>
 <script src="js/control.js"></script>
+<script src="js/bind.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/app.js"></script>
 <script src="js/screens/overview.js"></script>
-<script src="js/screens/mv.js"></script>
-<script src="js/screens/gen_bess.js"></script>
-<script src="js/screens/pv.js"></script>
-<script src="js/screens/load.js"></script>
-<script src="js/screens/safety_ppc.js"></script>
-<script src="js/screens/network.js"></script>
+<script src="js/screens/switchgear.js"></script>
+<script src="js/screens/generation.js"></script>
+<script src="js/screens/auxiliaries.js"></script>
 <script src="js/screens/system.js"></script>
 <script>SCADA.boot();</script>
 </body>

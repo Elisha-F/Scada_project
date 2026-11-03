@@ -127,7 +127,7 @@ SCADA.config = {
 
   /* ---------------- PPC defaults ---------------- */
   ppc: {
-    socMin: 10, socDgStart: 25, socDgStop: 80, socHigh: 95, socMax: 98,
+    socMin: 10, socDgStart: 20, socDgStop: 80, socHigh: 95, socMax: 98,
     dgMinLoadPct: 30, dgOptLoadPct: 75, dgMinRunMin: 30, dgCoolDownMin: 5,
     fNom: 50, uNomKv: 11, rampKwS: 50
   }
